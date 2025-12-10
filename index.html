@@ -4,27 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sedayu Hub - Kuliner, Balon & Bucket</title>
-    
-    <!-- Tailwind CSS (Untuk Desain) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Icon Library -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- Font -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
         .pattern-icon { position: absolute; opacity: 0.05; pointer-events: none; }
-        
-        /* Animations */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-        
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .animate-spin-custom { animation: spin 1s linear infinite; }
     </style>
@@ -81,9 +71,7 @@
 
     <!-- TABS -->
     <div class="max-w-4xl mx-auto px-4 my-6 sticky top-[72px] z-30 bg-[#FDFBF7]/95 backdrop-blur py-2">
-        <div class="flex space-x-2 overflow-x-auto pb-1 scrollbar-hide" id="tabs-container">
-            <!-- Tabs akan muncul di sini via JS -->
-        </div>
+        <div class="flex space-x-2 overflow-x-auto pb-1 scrollbar-hide" id="tabs-container"></div>
     </div>
 
     <!-- PRODUCT GRID -->
@@ -92,9 +80,7 @@
             <i data-lucide="loader-2" class="w-10 h-10 text-orange-500 animate-spin-custom mb-2"></i>
             <p class="text-gray-500 text-sm font-medium">Sedang mengambil menu terbaru...</p>
         </div>
-        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 hidden">
-            <!-- Produk akan muncul di sini via JS -->
-        </div>
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 hidden"></div>
     </div>
 
     <!-- AI FLOATING BUTTON -->
@@ -126,14 +112,8 @@
                 </h2>
                 <button onclick="toggleCart()" class="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-red-500 transition"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-
-            <div class="flex-1 overflow-y-auto p-5 space-y-4" id="cart-items">
-                <!-- Item keranjang muncul di sini -->
-            </div>
-
-            <!-- Checkout Form -->
+            <div class="flex-1 overflow-y-auto p-5 space-y-4" id="cart-items"></div>
             <div id="cart-footer" class="hidden p-5 border-t border-gray-200 bg-white space-y-4 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
-                
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Opsi Pengiriman</label>
                     <div class="grid grid-cols-2 gap-3">
@@ -146,7 +126,6 @@
                     </div>
                     <p id="delivery-note" class="hidden text-[10px] text-center text-orange-600 bg-orange-50 py-1 rounded font-medium">*Ongkir dibayar tunai ke kurir (COD)</p>
                 </div>
-
                 <div class="space-y-3">
                     <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
                         <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Nama Pemesan</label>
@@ -157,7 +136,6 @@
                         <textarea id="cust-note" placeholder="Contoh: Pedas, pita biru..." class="w-full bg-transparent text-sm font-medium text-gray-800 outline-none h-10 resize-none placeholder:font-normal"></textarea>
                     </div>
                 </div>
-
                 <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-3">
                     <div class="flex items-center gap-2 mb-1">
                         <i data-lucide="credit-card" class="w-4 h-4 text-blue-600"></i>
@@ -174,7 +152,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="pt-2">
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-gray-500 text-sm font-medium">Total Tagihan</span>
@@ -218,7 +195,7 @@
         </div>
     </div>
 
-    <!-- LOGIKA JAVASCRIPT (VANILLA JS) -->
+    <!-- LOGIKA JAVASCRIPT -->
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5n6RxBtmY46nwhN06K45uJAl0tFcL079Eh9YNYfZC_niVpJEtENDu4oPTK5CmOnUS/exec";
         const apiKey = ""; 
@@ -306,32 +283,54 @@
                 const icon = product.category === 'kuliner' ? 'utensils' : product.category === 'balon' ? 'party-popper' : 'gift';
                 const iconColor = product.category === 'kuliner' ? 'text-orange-500' : product.category === 'balon' ? 'text-pink-500' : 'text-blue-500';
 
+                // --- STOK LOGIC ---
+                // Pastikan stock adalah angka. Jika undefined (misal di sheet blm ada kolom G), anggap 999
+                const currentStock = (product.stock === undefined || product.stock === "") ? 999 : parseInt(product.stock);
+                const isSoldOut = currentStock <= 0;
+
+                // Tombol Logic
+                let actionButton = '';
+                if (isSoldOut) {
+                    actionButton = `
+                    <button disabled class="bg-gray-200 text-gray-500 px-4 py-2 rounded-xl text-xs font-bold cursor-not-allowed">
+                        HABIS
+                    </button>`;
+                } else {
+                    actionButton = `
+                    <button onclick="addToCart('${product.id}')" class="bg-gray-900 text-white w-10 h-10 rounded-xl flex items-center justify-center hover:bg-orange-600 transition-colors duration-300 shadow-md active:scale-90">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                    </button>`;
+                }
+
+                // Overlay Logic
+                const soldOutOverlay = isSoldOut ? 
+                    `<div class="absolute inset-0 bg-black/50 flex items-center justify-center z-30">
+                        <span class="text-white font-black text-xl border-4 border-white px-4 py-2 rotate-[-12deg] tracking-widest">SOLD OUT</span>
+                    </div>` : '';
+
                 return `
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group animate-fade-in">
-                    <div class="h-44 w-full relative overflow-hidden bg-gray-50">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group animate-fade-in ${isSoldOut ? 'grayscale opacity-80' : ''}">
+                    <div class="h-80 w-full relative overflow-hidden bg-gray-50">
                         ${imgContent}
+                        ${soldOutOverlay}
                         <div class="absolute inset-0 ${bgClass} flex items-center justify-center ${isUrl ? 'hidden' : 'flex'}">
                             <div class="relative z-10 bg-white/80 backdrop-blur p-4 rounded-full shadow-sm">
                                 <i data-lucide="${icon}" class="w-8 h-8 ${iconColor}"></i>
                             </div>
-                        </div>
-                        <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-extrabold text-gray-800 uppercase tracking-wide border border-gray-100 shadow-sm z-20">
-                            ${product.category === 'kuliner' ? 'Dapur Sedayu' : 'Blooms'}
                         </div>
                     </div>
                     <div class="p-5 flex flex-col flex-grow bg-white">
                         <div class="flex-grow">
                             <h3 class="font-bold text-gray-800 text-lg leading-snug mb-1">${product.name}</h3>
                             <p class="text-gray-500 text-xs leading-relaxed line-clamp-2">${product.desc}</p>
+                            ${!isSoldOut && currentStock < 10 ? `<p class="text-[10px] text-red-500 font-bold mt-1">Sisa ${currentStock} item!</p>` : ''}
                         </div>
                         <div class="mt-5 pt-4 border-t border-dashed border-gray-200 flex items-center justify-between">
                             <div>
                                 <span class="text-[10px] text-gray-400 block font-bold uppercase">Harga</span>
                                 <span class="font-black text-lg text-red-600">Rp ${Number(product.price).toLocaleString('id-ID')}</span>
                             </div>
-                            <button onclick="addToCart('${product.id}')" class="bg-gray-900 text-white w-10 h-10 rounded-xl flex items-center justify-center hover:bg-orange-600 transition-colors duration-300 shadow-md active:scale-90">
-                                <i data-lucide="plus" class="w-5 h-5"></i>
-                            </button>
+                            ${actionButton}
                         </div>
                     </div>
                 </div>`;
@@ -341,17 +340,36 @@
 
         function addToCart(id) {
             const product = products.find(p => p.id == id);
+            
+            // Cek Stok Client-Side
+            const currentStock = (product.stock === undefined || product.stock === "") ? 999 : parseInt(product.stock);
             const existing = cart.find(item => item.id == id);
+            const currentQty = existing ? existing.qty : 0;
+
+            if (currentQty >= currentStock) {
+                alert("Maaf, stok tidak mencukupi!");
+                return;
+            }
+
             if (existing) existing.qty += 1;
             else cart.push({ ...product, qty: 1 });
+            
             updateCartUI();
             toggleCart(true);
         }
 
         function updateQty(id, change) {
             const item = cart.find(i => i.id == id);
+            const product = products.find(p => p.id == id);
+            const currentStock = (product.stock === undefined || product.stock === "") ? 999 : parseInt(product.stock);
+
             if (item) {
-                item.qty += change;
+                const newQty = item.qty + change;
+                if (newQty > currentStock) {
+                    alert("Maksimal stok tercapai!");
+                    return;
+                }
+                item.qty = newQty;
                 if (item.qty <= 0) item.qty = 1;
             }
             renderCartItems();
