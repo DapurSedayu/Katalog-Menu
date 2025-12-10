@@ -30,7 +30,6 @@
         @keyframes zoomIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .animate-zoom-in { animation: zoomIn 0.2s ease-out forwards; }
 
-        /* Toast Animation */
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .toast-enter { animation: slideUp 0.3s ease-out forwards; }
     </style>
@@ -58,10 +57,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold text-gray-800 leading-tight">Sedayu Hub</h1>
-                    <!-- Status Toko -->
-                    <div id="store-status" class="flex items-center gap-1 text-xs font-semibold">
-                        <!-- Disuntikkan via JS -->
-                    </div>
+                    <div id="store-status" class="flex items-center gap-1 text-xs font-semibold"></div>
                 </div>
             </div>
             <button onclick="toggleCart()" class="relative p-2 text-gray-600 hover:bg-orange-50 rounded-full transition-colors">
@@ -71,7 +67,7 @@
         </div>
     </nav>
 
-    <!-- TOAST NOTIFICATION (Pesan Pop-up Halus) -->
+    <!-- TOAST NOTIFICATION -->
     <div id="toast-container" class="fixed top-24 right-4 z-[70] flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- HERO SECTION -->
@@ -85,7 +81,6 @@
                 <h2 class="text-3xl md:text-4xl font-black mb-3 drop-shadow-md">Citarasa & Cerita</h2>
                 <p class="text-orange-50 text-sm md:text-base max-w-lg mx-auto mb-6 font-medium">Dari dapur penuh rempah hingga dekorasi penuh warna. <span class="block mt-1 font-bold text-yellow-200">Spesial untuk momen Anda.</span></p>
                 
-                <!-- SEARCH BAR (FITUR BARU) -->
                 <div class="max-w-md mx-auto relative group">
                     <input type="text" id="search-input" onkeyup="handleSearch()" placeholder="Cari menu favoritmu (Ayam, Jus, Balon)..." 
                         class="w-full pl-10 pr-4 py-3 rounded-full text-gray-800 text-sm font-medium focus:ring-2 focus:ring-orange-300 focus:outline-none shadow-lg group-hover:shadow-xl transition-all">
@@ -97,9 +92,7 @@
 
     <!-- TABS -->
     <div class="max-w-4xl mx-auto px-4 my-6 sticky top-[72px] z-30 bg-[#FDFBF7]/95 backdrop-blur py-2">
-        <div class="flex space-x-2 overflow-x-auto pb-1 scrollbar-hide" id="tabs-container">
-            <!-- Tabs di-render via JS -->
-        </div>
+        <div class="flex space-x-2 overflow-x-auto pb-1 scrollbar-hide" id="tabs-container"></div>
     </div>
 
     <!-- PRODUCT GRID -->
@@ -108,10 +101,7 @@
             <i data-lucide="loader-2" class="w-10 h-10 text-orange-500 animate-spin-custom mb-2"></i>
             <p class="text-gray-500 text-sm font-medium">Sedang mengambil menu terbaru...</p>
         </div>
-        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 hidden">
-            <!-- Produk di-render via JS -->
-        </div>
-        <!-- Pesan jika hasil pencarian nihil -->
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 hidden"></div>
         <div id="empty-state" class="hidden text-center py-12">
             <i data-lucide="search-x" class="w-12 h-12 text-gray-300 mx-auto mb-3"></i>
             <p class="text-gray-500 font-medium">Yah, menu yang kamu cari belum ada.</p>
@@ -183,19 +173,36 @@
                     </div>
                 </div>
 
+                <!-- INFO PEMBAYARAN (FIXED CLICK TO COPY) -->
                 <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-3">
                     <div class="flex items-center gap-2 mb-1">
                         <i data-lucide="credit-card" class="w-4 h-4 text-blue-600"></i>
-                        <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Transfer Pembayaran</span>
+                        <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Transfer Pembayaran (Klik untuk Salin)</span>
                     </div>
                     <div class="space-y-2">
-                        <div class="flex items-center gap-3 bg-white p-2 rounded-lg border border-blue-100">
-                            <div class="h-6 w-10 bg-blue-600 rounded flex items-center justify-center text-[10px] font-bold text-white">BNI</div>
-                            <div><p class="text-xs font-bold text-gray-800">699441202</p><p class="text-[10px] text-gray-500">Finda Fatmawati</p></div>
+                        <!-- BNI -->
+                        <div onclick="copyText('699441202', 'Nomor BNI')" class="flex items-center justify-between bg-white p-2 rounded-lg border border-blue-100 cursor-pointer hover:bg-blue-50 transition active:scale-95 group">
+                            <div class="flex items-center gap-3">
+                                <div class="h-6 w-10 bg-blue-600 rounded flex items-center justify-center text-[10px] font-bold text-white">BNI</div>
+                                <div><p class="text-xs font-bold text-gray-800">699441202</p><p class="text-[10px] text-gray-500">Finda Fatmawati</p></div>
+                            </div>
+                            <i data-lucide="copy" class="w-4 h-4 text-gray-400 group-hover:text-blue-600"></i>
                         </div>
-                        <div class="flex items-center gap-3 bg-white p-2 rounded-lg border border-blue-100">
-                            <div class="h-6 w-10 bg-blue-800 rounded flex items-center justify-center text-[10px] font-bold text-white">BCA</div>
-                            <div><p class="text-xs font-bold text-gray-800">6225038906</p><p class="text-[10px] text-gray-500">Finda Fatmawati</p></div>
+                        <!-- BCA -->
+                        <div onclick="copyText('6225038906', 'Nomor BCA')" class="flex items-center justify-between bg-white p-2 rounded-lg border border-blue-100 cursor-pointer hover:bg-blue-50 transition active:scale-95 group">
+                            <div class="flex items-center gap-3">
+                                <div class="h-6 w-10 bg-blue-800 rounded flex items-center justify-center text-[10px] font-bold text-white">BCA</div>
+                                <div><p class="text-xs font-bold text-gray-800">6225038906</p><p class="text-[10px] text-gray-500">Finda Fatmawati</p></div>
+                            </div>
+                            <i data-lucide="copy" class="w-4 h-4 text-gray-400 group-hover:text-blue-600"></i>
+                        </div>
+                        <!-- GOPAY -->
+                        <div onclick="copyText('081584448308', 'Nomor GoPay')" class="flex items-center justify-between bg-white p-2 rounded-lg border border-blue-100 cursor-pointer hover:bg-blue-50 transition active:scale-95 group">
+                            <div class="flex items-center gap-3">
+                                <div class="h-6 w-12 bg-green-500 rounded flex items-center justify-center text-[9px] font-bold text-white">GOPAY</div>
+                                <div><p class="text-xs font-bold text-gray-800">081584448308</p><p class="text-[10px] text-gray-500">Finda Fatmawati</p></div>
+                            </div>
+                            <i data-lucide="copy" class="w-4 h-4 text-gray-400 group-hover:text-green-600"></i>
                         </div>
                     </div>
                 </div>
@@ -261,10 +268,10 @@
         let activeTab = 'all';
         let deliveryType = 'pickup';
         let aiResponseText = '';
-        let searchKeyword = ''; // Search State
+        let searchKeyword = ''; 
 
-        // --- SETTING JAM OPERASIONAL ---
-        const OPEN_HOUR = 8;
+        // JAM OPERASIONAL (Buka: 04.00 - 21.00)
+        const OPEN_HOUR = 4;
         const CLOSE_HOUR = 21;
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -279,7 +286,6 @@
             }
         });
 
-        // --- CEK JAM BUKA ---
         function isStoreOpen() {
             const now = new Date();
             const hour = now.getHours();
@@ -309,7 +315,6 @@
             }
         }
 
-        // --- SEARCH FUNCTION ---
         function handleSearch() {
             const input = document.getElementById('search-input');
             searchKeyword = input.value.toLowerCase();
@@ -351,7 +356,6 @@
 
         function setTab(id) {
             activeTab = id;
-            // Jika user klik tab, reset search agar tidak bingung
             if(searchKeyword) {
                 document.getElementById('search-input').value = '';
                 searchKeyword = '';
@@ -364,15 +368,11 @@
             const container = document.getElementById('product-grid');
             const emptyState = document.getElementById('empty-state');
             
-            // Filter 1: Kategori
             let filtered = activeTab === 'all' ? products : products.filter(p => p.category === activeTab);
-            
-            // Filter 2: Search
             if (searchKeyword) {
                 filtered = filtered.filter(p => p.name.toLowerCase().includes(searchKeyword));
             }
 
-            // Tampilkan Empty State jika tidak ada hasil
             if (filtered.length === 0) {
                 container.classList.add('hidden');
                 emptyState.classList.remove('hidden');
@@ -406,11 +406,8 @@
                 const icon = product.category === 'kuliner' ? 'utensils' : product.category === 'balon' ? 'party-popper' : product.category === 'minuman' ? 'cup-soda' : 'gift';
                 const iconColor = product.category === 'kuliner' ? 'text-orange-500' : product.category === 'balon' ? 'text-pink-500' : product.category === 'minuman' ? 'text-teal-500' : 'text-blue-500';
 
-                // --- STOK & STATUS LOGIC ---
                 const currentStock = (product.stock === undefined || product.stock === "") ? 999 : parseInt(product.stock);
                 const isSoldOut = currentStock <= 0;
-                
-                // Kunci tombol jika Tutup atau Habis
                 const isDisabled = isSoldOut || !storeOpen;
 
                 let actionButton = '';
@@ -463,17 +460,41 @@
             lucide.createIcons();
         }
 
-        // --- TOAST FUNCTION (NEW) ---
+        // --- ROBUST CLIPBOARD FUNCTION (FIX) ---
+        function copyText(text, label) {
+            // Gunakan metode 'textarea' sementara yang pasti berhasil
+            const el = document.createElement('textarea');
+            el.value = text;
+            el.setAttribute('readonly', '');
+            el.style.position = 'absolute';
+            el.style.left = '-9999px';
+            document.body.appendChild(el);
+            
+            const selected = document.getSelection().rangeCount > 0 ? document.getSelection().getRangeAt(0) : false;
+            el.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast(`${label} berhasil disalin!`);
+            } catch (err) {
+                showToast("Gagal menyalin. Silakan salin manual.", 'error');
+            }
+            
+            document.body.removeChild(el);
+            if (selected) {
+                document.getSelection().removeAllRanges();
+                document.getSelection().addRange(selected);
+            }
+        }
+
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            
             const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-600';
             const icon = type === 'error' ? 'alert-circle' : 'check-circle';
 
             toast.className = `${bgColor} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-bold toast-enter`;
             toast.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4"></i> ${message}`;
-            
             container.appendChild(toast);
             lucide.createIcons();
 
@@ -486,24 +507,14 @@
         }
 
         function addToCart(id) {
-            if (!isStoreOpen()) {
-                showToast("Maaf, toko sedang tutup.", 'error');
-                return;
-            }
-
+            if (!isStoreOpen()) { showToast("Maaf, toko sedang tutup.", 'error'); return; }
             const product = products.find(p => p.id == id);
             const currentStock = (product.stock === undefined || product.stock === "") ? 999 : parseInt(product.stock);
             const existing = cart.find(item => item.id == id);
             const currentQty = existing ? existing.qty : 0;
 
-            if (currentQty >= currentStock) {
-                showToast("Stok sudah habis!", 'error');
-                return;
-            }
-
-            if (existing) existing.qty += 1;
-            else cart.push({ ...product, qty: 1 });
-            
+            if (currentQty >= currentStock) { showToast("Stok sudah habis!", 'error'); return; }
+            if (existing) existing.qty += 1; else cart.push({ ...product, qty: 1 });
             updateCartUI();
             showToast("Berhasil masuk keranjang!");
         }
@@ -515,10 +526,7 @@
 
             if (item) {
                 const newQty = item.qty + change;
-                if (newQty > currentStock) {
-                    showToast("Maksimal stok tercapai!", 'error');
-                    return;
-                }
+                if (newQty > currentStock) { showToast("Maksimal stok tercapai!", 'error'); return; }
                 item.qty = newQty;
                 if (item.qty <= 0) item.qty = 1;
             }
@@ -535,10 +543,8 @@
         function updateCartUI() {
             const totalItems = cart.reduce((acc, item) => acc + item.qty, 0);
             const totalAmount = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
-            
             document.getElementById('cart-badge').textContent = totalItems;
             document.getElementById('cart-badge').classList.toggle('hidden', totalItems === 0);
-            
             const mobileBtn = document.getElementById('mobile-cart-btn');
             if (totalItems > 0) {
                 mobileBtn.classList.remove('hidden');
@@ -644,14 +650,11 @@
             } catch (e) { console.error(e); }
 
             let waMsg = `🧾 *STRUK SEDAYU HUB*\nNama: ${name}\nTotal: Rp ${total.toLocaleString('id-ID')}\nMetode: ${delInfo}\n`;
-            
             if (deliveryType === 'delivery') waMsg += `🏠 Alamat: ${address}\n`;
             if (note) waMsg += `📝 Catatan: ${note}\n`;
-            
-            waMsg += `\n🛒 Item:\n${itemsStr}\n\n💳 Info Bayar:\n• BNI: 699441202\n• BCA: 6225038906\n(a.n Finda Fatmawati)\n\nMohon diproses, terima kasih!`;
+            waMsg += `\n🛒 Item:\n${itemsStr}\n\n💳 Info Bayar:\n• BNI: 699441202\n• BCA: 6225038906\n• GOPAY: 081584448308\n(a.n Finda Fatmawati)\n\nMohon diproses, terima kasih!`;
             
             window.open(`https://wa.me/6281584448308?text=${encodeURIComponent(waMsg)}`, '_blank');
-            
             cart = [];
             updateCartUI();
             toggleCart();
@@ -669,7 +672,6 @@
             const btn = document.getElementById('btn-ask-ai');
             btn.innerHTML = "Mikir bentar...";
             btn.disabled = true;
-            
             try {
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
