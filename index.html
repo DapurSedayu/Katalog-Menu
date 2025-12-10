@@ -1,0 +1,428 @@
+import React, { useState, useEffect } from 'react';
+import { ShoppingCart, Utensils, Gift, PartyPopper, Instagram, MessageCircle, MapPin, X, Plus, Minus, Trash2, ShoppingBag, Loader2, ChefHat, Flame, Leaf, Soup, Wheat, CreditCard, Bike, Store, FileText } from 'lucide-react';
+
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5n6RxBtmY46nwhN06K45uJAl0tFcL079Eh9YNYfZC_niVpJEtENDu4oPTK5CmOnUS/exec";
+
+const App = () => {
+  // --- State Management ---
+  const [products, setProducts] = useState([]); 
+  const [isLoadingMenu, setIsLoadingMenu] = useState(true);
+  const [activeTab, setActiveTab] = useState('all');
+  const [cart, setCart] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [customerName, setCustomerName] = useState('');
+  const [customerNote, setCustomerNote] = useState('');
+  const [deliveryType, setDeliveryType] = useState('pickup'); // 'pickup' atau 'delivery'
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // --- Ambil Data Menu ---
+  useEffect(() => {
+    fetchMenu();
+  }, []);
+
+  const fetchMenu = async () => {
+    setIsLoadingMenu(true);
+    try {
+      const response = await fetch(GOOGLE_SCRIPT_URL);
+      const data = await response.json();
+      if (Array.isArray(data) && data.length > 0) {
+        setProducts(data);
+      } else {
+        setProducts([]); 
+      }
+    } catch (error) {
+      console.error("Gagal mengambil menu:", error);
+      setProducts([]); 
+    } finally {
+      setIsLoadingMenu(false);
+    }
+  };
+
+  // --- Functions ---
+  const addToCart = (product) => {
+    const existingItem = cart.find((item) => item.id === product.id);
+    if (existingItem) {
+      setCart(cart.map((item) => item.id === product.id ? { ...item, qty: item.qty + 1 } : item));
+    } else {
+      setCart([...cart, { ...product, qty: 1 }]);
+    }
+    setIsCartOpen(true);
+  };
+
+  const updateQty = (id, change) => {
+    setCart(cart.map((item) => {
+      if (item.id === id) {
+        const newQty = item.qty + change;
+        return newQty > 0 ? { ...item, qty: newQty } : item;
+      }
+      return item;
+    }));
+  };
+
+  const removeItem = (id) => {
+    setCart(cart.filter((item) => item.id !== id));
+  };
+
+  const totalAmount = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+  const totalItems = cart.reduce((acc, item) => acc + item.qty, 0);
+
+  // --- FUNGSI CHECKOUT DENGAN STRUK ---
+  const handleCheckout = async () => {
+    if (cart.length === 0) return;
+    if (!customerName) {
+      alert("Mohon isi nama Anda terlebih dahulu.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // 1. Simpan ke Database Google Sheet
+    let orderDetailsString = "";
+    cart.forEach((item) => {
+      orderDetailsString += `${item.name} (x${item.qty}), `;
+    });
+    orderDetailsString = orderDetailsString.replace(/, $/, "");
+
+    const deliveryInfo = deliveryType === 'delivery' ? "Antar Kurir (Ongkir COD)" : "Ambil di Dapur";
+    const finalNote = `[${deliveryInfo}] ${customerNote}`;
+
+    const orderData = {
+      nama: customerName,
+      nomor_hp: "-", 
+      items: orderDetailsString,
+      total: totalAmount,
+      catatan: finalNote
+    };
+
+    try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(orderData),
+        });
+    } catch (error) {
+      console.error("Gagal menyimpan ke database:", error);
+    }
+
+    // 2. Format Pesan WhatsApp (Model Struk)
+    const phoneNumber = "6281584448308";
+    const dateNow = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    
+    let message = `🧾 *STRUK PESANAN - SEDAYU HUB* 🧾\n`;
+    message += `Tanggal: ${dateNow}\n`;
+    message += `Pemesan: *${customerName}*\n`;
+    message += `----------------------------------\n`;
+    
+    cart.forEach((item) => {
+      const subtotal = item.price * item.qty;
+      message += `${item.name}\n`;
+      message += `   ${item.qty} x Rp ${item.price.toLocaleString('id-ID')} = Rp ${subtotal.toLocaleString('id-ID')}\n`;
+    });
+    
+    message += `----------------------------------\n`;
+    message += `*TOTAL TAGIHAN: Rp ${totalAmount.toLocaleString('id-ID')}*\n`;
+    message += `----------------------------------\n`;
+    message += `📋 *Info Pengiriman:*\n`;
+    message += `Metode: ${deliveryType === 'delivery' ? '🛵 Antar Kurir (Ongkir COD)' : '🏪 Ambil di Dapur'}\n`;
+    if (customerNote) message += `Catatan: ${customerNote}\n`;
+    
+    message += `\n💳 *Info Pembayaran Transfer:*\n`;
+    message += `• BNI: 699441202 (Finda Fatmawati)\n`;
+    message += `• BCA: 6225038906 (Finda Fatmawati)\n`;
+    
+    message += `\nMohon proses pesanan saya. Bukti transfer akan saya kirim setelah ini. Terima kasih!`;
+
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+    
+    setIsSubmitting(false);
+    setCart([]);
+    setIsCartOpen(false);
+  };
+
+  const filteredProducts = activeTab === 'all' ? products : products.filter(p => p.category === activeTab);
+
+  const ProductImage = ({ src, category }) => {
+    const [imgError, setImgError] = useState(false);
+    const isUrl = src && src.toString().includes('http');
+
+    if (isUrl && !imgError) {
+      return (
+        <img src={src} alt="Product" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onError={() => setImgError(true)} />
+      );
+    }
+    
+    let bgClass = src && src.toString().includes('bg-') ? src : 'bg-gray-100';
+    if (imgError || !src) {
+        if (category === 'kuliner') bgClass = 'bg-orange-100';
+        else if (category === 'balon') bgClass = 'bg-pink-100';
+        else bgClass = 'bg-blue-100';
+    }
+
+    return (
+      <div className={`w-full h-full ${bgClass} flex items-center justify-center relative`}>
+         <div className="opacity-10 transform scale-150 rotate-12 absolute text-gray-900">
+            {category === 'kuliner' && <Utensils size={100} />}
+            {category === 'balon' && <PartyPopper size={100} />}
+            {category === 'bucket' && <Gift size={100} />}
+         </div>
+         <div className="relative z-10 bg-white/80 backdrop-blur p-4 rounded-full shadow-sm">
+            {category === 'kuliner' && <Utensils size={32} className="text-orange-500" />}
+            {category === 'balon' && <PartyPopper size={32} className="text-pink-500" />}
+            {category === 'bucket' && <Gift size={32} className="text-blue-500" />}
+         </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-[#FDFBF7] font-sans pb-24 md:pb-0 text-gray-800 relative overflow-hidden">
+      
+      {/* Background Pattern */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <Leaf className="absolute top-[-20px] left-[-20px] text-green-700 opacity-[0.05] w-64 h-64 rotate-45" />
+        <Flame className="absolute bottom-[10%] right-[-30px] text-red-600 opacity-[0.05] w-80 h-80 -rotate-12" />
+        <Soup className="absolute top-[40%] left-[-40px] text-gray-400 opacity-[0.05] w-56 h-56" />
+        <Wheat className="absolute top-[15%] right-[5%] text-amber-600 opacity-[0.05] w-40 h-40 rotate-[130deg]" />
+      </div>
+
+      {/* Navbar Updated with Logo */}
+      <nav className="bg-white/90 backdrop-blur-sm shadow-sm sticky top-0 z-40 border-b border-orange-100">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center space-x-3">
+            {/* Logo Image */}
+            <div className="h-12 w-12 rounded-lg overflow-hidden flex items-center justify-center bg-white shadow-sm border border-orange-50">
+              <img 
+                src="https://i.ibb.co.com/xSw0nphy/Whats-App-Image-2025-12-10-at-11-07-06-removebg-preview.png" 
+                alt="Logo Sedayu Hub" 
+                className="w-full h-full object-contain p-1"
+              />
+            </div>
+            <div>
+              <h1 className="text-xl font-extrabold text-gray-800 leading-tight tracking-tight">Sedayu Hub</h1>
+              <p className="text-xs text-orange-600 font-semibold">Sawojajar 1, Malang</p>
+            </div>
+          </div>
+          <button onClick={() => setIsCartOpen(true)} className="relative p-2 text-gray-600 hover:bg-orange-50 rounded-full transition-colors">
+            <ShoppingCart size={24} />
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm animate-pulse">{totalItems}</span>
+            )}
+          </button>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <div className="max-w-4xl mx-auto pt-6 px-4 pb-2 relative z-10">
+        <div className="bg-gradient-to-r from-orange-600 to-red-700 text-white py-10 px-6 text-center rounded-2xl shadow-xl shadow-orange-200 relative overflow-hidden">
+          <Leaf className="absolute -top-5 -left-5 text-white opacity-10 w-24 h-24 rotate-12" />
+          <Flame className="absolute -bottom-5 -right-5 text-yellow-300 opacity-20 w-32 h-32 -rotate-12" />
+          <div className="relative z-10">
+            <h2 className="text-3xl md:text-4xl font-black mb-3 drop-shadow-md">Citarasa & Cerita</h2>
+            <p className="text-orange-50 text-sm md:text-base max-w-lg mx-auto mb-6 font-medium">Dari dapur penuh rempah hingga dekorasi penuh warna. <span className="block mt-1 font-bold text-yellow-200">Spesial untuk momen Anda.</span></p>
+            <div className="flex justify-center gap-3">
+              <a href="https://instagram.com/dapur.sedayu" target="_blank" className="flex items-center space-x-2 bg-white text-orange-600 px-4 py-2 rounded-full text-xs font-bold hover:bg-orange-50 transition shadow-sm border-b-2 border-orange-200"><Instagram size={14} /> <span>@dapur.sedayu</span></a>
+              <a href="https://instagram.com/bloomsbaloon" target="_blank" className="flex items-center space-x-2 bg-white/20 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-white/30 transition backdrop-blur-sm border border-white/30"><Instagram size={14} /> <span>@bloomsbaloon</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="max-w-4xl mx-auto px-4 my-6 sticky top-[70px] z-30 bg-[#FDFBF7]/95 backdrop-blur py-2">
+        <div className="flex space-x-2 overflow-x-auto pb-1 scrollbar-hide">
+          <button onClick={() => setActiveTab('all')} className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all border ${activeTab === 'all' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>Semua</button>
+          <button onClick={() => setActiveTab('kuliner')} className={`flex items-center space-x-1 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all border ${activeTab === 'kuliner' ? 'bg-orange-600 text-white border-orange-600 shadow-md shadow-orange-200' : 'bg-white text-gray-500 border-gray-200 hover:border-orange-300 hover:text-orange-600'}`}><Utensils size={14} /> <span>Kuliner</span></button>
+          <button onClick={() => setActiveTab('balon')} className={`flex items-center space-x-1 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all border ${activeTab === 'balon' ? 'bg-pink-500 text-white border-pink-500 shadow-md shadow-pink-200' : 'bg-white text-gray-500 border-gray-200 hover:border-pink-300 hover:text-pink-500'}`}><PartyPopper size={14} /> <span>Balon</span></button>
+          <button onClick={() => setActiveTab('bucket')} className={`flex items-center space-x-1 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all border ${activeTab === 'bucket' ? 'bg-blue-500 text-white border-blue-500 shadow-md shadow-blue-200' : 'bg-white text-gray-500 border-gray-200 hover:border-blue-300 hover:text-blue-500'}`}><Gift size={14} /> <span>Bucket</span></button>
+        </div>
+      </div>
+
+      {/* Grid Produk */}
+      <div className="max-w-4xl mx-auto px-4 mb-24 relative z-10">
+        {isLoadingMenu ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="animate-spin text-orange-500 mb-2" size={40} />
+            <p className="text-gray-500 text-sm font-medium">Sedang mengambil menu terbaru...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+            {filteredProducts.map((product) => (
+              <div key={product.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                <div className="h-44 w-full bg-gray-50 relative overflow-hidden">
+                    <ProductImage src={product.image} category={product.category} />
+                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-extrabold text-gray-800 uppercase tracking-wide border border-gray-100 shadow-sm z-20">
+                        {product.category === 'kuliner' ? 'Dapur Sedayu' : 'Blooms'}
+                    </div>
+                </div>
+                <div className="p-5 flex flex-col flex-grow bg-white">
+                  <div className="flex-grow">
+                    <h3 className="font-bold text-gray-800 text-lg leading-snug mb-1">{product.name}</h3>
+                    <p className="text-gray-500 text-xs leading-relaxed line-clamp-2">{product.desc}</p>
+                  </div>
+                  <div className="mt-5 pt-4 border-t border-dashed border-gray-200 flex items-center justify-between">
+                    <div>
+                        <span className="text-[10px] text-gray-400 block font-bold uppercase">Harga</span>
+                        <span className="font-black text-lg text-red-600">Rp {Number(product.price).toLocaleString('id-ID')}</span>
+                    </div>
+                    <button onClick={() => addToCart(product)} className="bg-gray-900 text-white w-10 h-10 rounded-xl flex items-center justify-center hover:bg-orange-600 transition-colors duration-300 shadow-md active:scale-90">
+                      <Plus size={20} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Mobile Cart Button */}
+      {totalItems > 0 && (
+        <div className="fixed bottom-6 left-4 right-4 md:hidden z-30">
+          <button onClick={() => setIsCartOpen(true)} className="w-full bg-gray-900 text-white shadow-2xl shadow-gray-900/40 py-4 px-6 rounded-2xl flex items-center justify-between border-t border-gray-700 backdrop-blur-xl">
+            <div className="flex items-center space-x-3">
+              <div className="bg-red-500 px-2.5 py-1 rounded-lg text-xs font-bold text-white">{totalItems} Item</div>
+              <span className="font-semibold text-sm text-gray-200">Total Pesanan</span>
+            </div>
+            <span className="font-bold text-lg text-white">Rp {totalAmount.toLocaleString('id-ID')}</span>
+          </button>
+        </div>
+      )}
+
+      {/* Cart Modal / Checkout */}
+      {isCartOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)}></div>
+          <div className="relative w-full max-w-md bg-[#FDFBF7] h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+            <div className="p-5 border-b border-gray-200 flex items-center justify-between bg-white">
+              <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800">
+                <ShoppingCart size={20} className="text-orange-600" /> Checkout
+              </h2>
+              <button onClick={() => setIsCartOpen(false)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-red-500 transition"><X size={20} /></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {/* Item List */}
+              {cart.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-60">
+                  <div className="bg-gray-200 p-6 rounded-full mb-4"><ShoppingBag size={48} className="text-gray-400" /></div>
+                  <h3 className="text-gray-800 font-bold mb-1">Perut masih kosong?</h3>
+                  <button onClick={() => setIsCartOpen(false)} className="mt-6 px-6 py-2 bg-orange-600 text-white rounded-full text-sm font-bold hover:bg-orange-700 transition">Lihat Menu</button>
+                </div>
+              ) : (
+                cart.map((item) => (
+                  <div key={item.id} className="flex gap-4 p-3 bg-white border border-gray-200 rounded-xl shadow-sm">
+                    <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-200">
+                         {item.image && item.image.includes('http') ? (
+                             <img src={item.image} className="w-full h-full object-cover" alt={item.name} onError={(e) => {e.target.style.display='none'}} />
+                         ) : (
+                             <div className={`w-full h-full ${item.image || 'bg-gray-200'} flex items-center justify-center`}>
+                                {item.category === 'kuliner' && <Utensils size={14} className="opacity-50"/>}
+                             </div>
+                         )}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-800 text-sm leading-tight">{item.name}</h4>
+                      <p className="text-red-600 font-bold text-sm mt-1">Rp {(item.price * item.qty).toLocaleString('id-ID')}</p>
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="flex items-center space-x-3 bg-gray-50 rounded-lg p-1 border border-gray-200">
+                          <button onClick={() => updateQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm hover:text-red-500 transition"><Minus size={12} /></button>
+                          <span className="text-xs font-bold w-4 text-center text-gray-800">{item.qty}</span>
+                          <button onClick={() => updateQty(item.id, 1)} className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm hover:text-green-500 transition"><Plus size={12} /></button>
+                        </div>
+                        <button onClick={() => removeItem(item.id)} className="text-gray-300 hover:text-red-500 p-1 transition"><Trash2 size={18} /></button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {cart.length > 0 && (
+              <div className="p-5 border-t border-gray-200 bg-white space-y-4 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+                
+                {/* --- Pilihan Pengiriman --- */}
+                <div className="space-y-2">
+                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Opsi Pengiriman</label>
+                   <div className="grid grid-cols-2 gap-3">
+                      <button 
+                        onClick={() => setDeliveryType('pickup')}
+                        className={`py-3 px-2 rounded-xl border text-sm font-bold flex flex-col items-center justify-center gap-1 transition-all ${deliveryType === 'pickup' ? 'bg-orange-50 border-orange-500 text-orange-700 shadow-sm ring-1 ring-orange-500' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                      >
+                         <Store size={18} />
+                         <span>Ambil di Dapur</span>
+                      </button>
+                      <button 
+                        onClick={() => setDeliveryType('delivery')}
+                        className={`py-3 px-2 rounded-xl border text-sm font-bold flex flex-col items-center justify-center gap-1 transition-all ${deliveryType === 'delivery' ? 'bg-orange-50 border-orange-500 text-orange-700 shadow-sm ring-1 ring-orange-500' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                      >
+                         <Bike size={18} />
+                         <span>Antar Kurir</span>
+                      </button>
+                   </div>
+                   {deliveryType === 'delivery' && (
+                     <p className="text-[10px] text-center text-orange-600 bg-orange-50 py-1 rounded font-medium">*Ongkir dibayar tunai ke kurir (COD)</p>
+                   )}
+                </div>
+
+                {/* Form Input */}
+                <div className="space-y-3">
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Nama Pemesan</label>
+                    <input type="text" placeholder="Nama Anda..." className="w-full bg-transparent text-sm font-bold text-gray-800 outline-none placeholder:font-normal" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Catatan</label>
+                    <textarea placeholder="Contoh: Pedas, pita biru..." className="w-full bg-transparent text-sm font-medium text-gray-800 outline-none h-10 resize-none placeholder:font-normal" value={customerNote} onChange={(e) => setCustomerNote(e.target.value)} />
+                  </div>
+                </div>
+
+                {/* --- Info Pembayaran --- */}
+                <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-3">
+                    <div className="flex items-center gap-2 mb-1">
+                        <CreditCard size={14} className="text-blue-600"/>
+                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Transfer Pembayaran</span>
+                    </div>
+                    <div className="space-y-3">
+                        <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-blue-100">
+                            <div className="flex items-center gap-3">
+                                <div className="h-6 w-10 bg-blue-600 rounded flex items-center justify-center text-[10px] font-bold text-white tracking-tighter">BNI</div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-800">699441202</p>
+                                    <p className="text-[10px] text-gray-500">Finda Fatmawati</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-blue-100">
+                            <div className="flex items-center gap-3">
+                                <div className="h-6 w-10 bg-blue-800 rounded flex items-center justify-center text-[10px] font-bold text-white tracking-tighter">BCA</div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-800">6225038906</p>
+                                    <p className="text-[10px] text-gray-500">Finda Fatmawati</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Tombol Aksi */}
+                <div className="pt-2">
+                    <div className="flex justify-between items-center mb-3">
+                        <span className="text-gray-500 text-sm font-medium">Total Barang</span>
+                        <span className="text-xl font-black text-gray-900">Rp {totalAmount.toLocaleString('id-ID')}</span>
+                    </div>
+                    <button onClick={handleCheckout} disabled={isSubmitting} className={`w-full text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-200 active:scale-[0.98] transition-all duration-300 ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}>
+                        {isSubmitting ? <><Loader2 className="animate-spin" size={20} /> Memproses...</> : <><FileText size={20} /> Kirim Struk & Order</>}
+                    </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default App;
