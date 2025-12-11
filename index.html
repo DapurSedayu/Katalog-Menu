@@ -19,7 +19,7 @@
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
-        .pattern-icon { position: absolute; opacity: 0.08; pointer-events: none; color: #9CA3AF; }
+        .pattern-icon { position: absolute; opacity: 0.04; pointer-events: none; color: #4B5563; }
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
@@ -32,14 +32,13 @@
 
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .toast-enter { animation: slideUp 0.3s ease-out forwards; }
-
-        /* Chat Widget Animation */
+        
         .chat-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
 </head>
 <body class="bg-[#FDFBF7] text-gray-800 relative overflow-x-hidden min-h-screen pb-24 md:pb-0">
 
-    <!-- BACKGROUND PATTERN -->
+    <!-- DYNAMIC BACKGROUND PATTERN -->
     <div id="dynamic-pattern" class="fixed inset-0 pointer-events-none z-0 overflow-hidden"></div>
 
     <!-- NAVBAR -->
@@ -75,6 +74,16 @@
                 <h2 class="text-3xl md:text-4xl font-black mb-3 drop-shadow-md">Citarasa & Cerita</h2>
                 <p class="text-orange-50 text-sm md:text-base max-w-lg mx-auto mb-6 font-medium">Dari dapur penuh rempah hingga dekorasi penuh warna. <span class="block mt-1 font-bold text-yellow-200">Spesial untuk momen Anda.</span></p>
                 
+                <!-- Instagram Links -->
+                <div class="flex justify-center gap-3 mb-6 flex-wrap">
+                    <a href="https://instagram.com/dapur.sedayu" target="_blank" class="flex items-center space-x-2 bg-white text-orange-600 px-4 py-2 rounded-full text-xs font-bold hover:bg-orange-50 transition shadow-sm border-b-2 border-orange-200">
+                        <i data-lucide="instagram" class="w-3 h-3"></i> <span>@dapur.sedayu</span>
+                    </a>
+                    <a href="https://instagram.com/bloomsbaloon" target="_blank" class="flex items-center space-x-2 bg-white/20 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-white/30 transition backdrop-blur-sm border border-white/30">
+                        <i data-lucide="instagram" class="w-3 h-3"></i> <span>@bloomsbaloon</span>
+                    </a>
+                </div>
+
                 <div class="max-w-md mx-auto relative group">
                     <input type="text" id="search-input" onkeyup="handleSearch()" placeholder="Cari menu favoritmu (Ayam, Jus, Balon)..." 
                         class="w-full pl-10 pr-4 py-3 rounded-full text-gray-800 text-sm font-medium focus:ring-2 focus:ring-orange-300 focus:outline-none shadow-lg group-hover:shadow-xl transition-all">
@@ -103,7 +112,7 @@
         </div>
     </div>
 
-    <!-- AI FLOATING BUTTON (Kiri Bawah) -->
+    <!-- AI FLOATING BUTTON -->
     <div class="fixed bottom-24 left-4 z-30">
         <button onclick="toggleAI()" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 rounded-full shadow-xl shadow-purple-500/30 flex items-center gap-2 hover:scale-105 transition-transform group">
             <i data-lucide="sparkles" class="w-6 h-6 animate-pulse"></i>
@@ -111,12 +120,11 @@
         </button>
     </div>
 
-    <!-- CHAT FLOATING BUTTON (Kanan Bawah - Baru) -->
+    <!-- CHAT FLOATING BUTTON -->
     <div class="fixed bottom-24 right-4 z-30">
         <button onclick="toggleChatWidget()" class="bg-[#25D366] text-white p-3 rounded-full shadow-xl shadow-green-500/30 flex items-center gap-2 hover:scale-105 transition-transform group">
             <span class="font-bold text-sm hidden md:block max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 whitespace-nowrap px-0 group-hover:px-1">Chat Admin</span>
             <i data-lucide="message-circle" class="w-6 h-6"></i>
-            <!-- Notification Dot -->
             <span class="absolute top-0 right-0 flex h-3 w-3">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
               <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
@@ -135,7 +143,7 @@
         </button>
     </div>
 
-    <!-- CHAT WIDGET POPUP (Baru) -->
+    <!-- CHAT WIDGET POPUP -->
     <div id="chat-widget" class="fixed bottom-24 right-4 z-40 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 hidden flex-col overflow-hidden chat-slide-up origin-bottom-right">
         <!-- Header -->
         <div class="bg-[#075E54] p-4 flex justify-between items-center text-white">
@@ -153,7 +161,6 @@
         
         <!-- Body -->
         <div class="p-4 bg-[#E5DDD5] bg-opacity-30 h-64 flex flex-col gap-3 overflow-y-auto">
-            <!-- Admin Msg -->
             <div class="self-start bg-white p-3 rounded-tr-xl rounded-bl-xl rounded-br-xl shadow-sm max-w-[85%]">
                 <p class="text-xs text-gray-600 mb-1 font-bold">Admin</p>
                 <p class="text-sm text-gray-800">Halo kak! 👋 Ada yang bisa dibantu? Mau tanya menu atau custom order?</p>
@@ -176,16 +183,19 @@
     <div id="cart-modal" class="fixed inset-0 z-50 flex justify-end hidden">
         <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onclick="toggleCart()"></div>
         <div class="relative w-full max-w-md bg-[#FDFBF7] h-full shadow-2xl flex flex-col transform transition-transform duration-300 translate-x-full" id="cart-panel">
+            
             <div class="p-5 border-b border-gray-200 flex items-center justify-between bg-white shrink-0 z-10">
                 <h2 class="text-lg font-bold flex items-center gap-2 text-gray-800">
                     <i data-lucide="shopping-cart" class="w-5 h-5 text-orange-600"></i> Checkout
                 </h2>
                 <button onclick="toggleCart()" class="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-red-500 transition"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
+
             <div class="flex-1 overflow-y-auto bg-[#FDFBF7]">
                 <div id="cart-items" class="p-5 space-y-4"></div>
+
                 <div id="cart-footer" class="hidden p-5 border-t border-gray-200 bg-white space-y-4 pb-10">
-                    <!-- Form Checkout -->
+                    
                     <div class="space-y-2">
                         <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Opsi Pengiriman</label>
                         <div class="grid grid-cols-2 gap-3">
@@ -198,21 +208,24 @@
                         </div>
                         <p id="delivery-note" class="hidden text-[10px] text-center text-orange-600 bg-orange-50 py-1 rounded font-medium">*Ongkir dibayar tunai ke kurir (COD)</p>
                     </div>
+
                     <div class="space-y-3">
                         <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Nama Pemesan</label>
                             <input type="text" id="cust-name" placeholder="Nama Anda..." class="w-full bg-transparent text-sm font-bold text-gray-800 outline-none placeholder:font-normal">
                         </div>
+                        
                         <div id="address-container" class="bg-gray-50 p-3 rounded-xl border border-gray-100 hidden">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Alamat Pengiriman</label>
                             <textarea id="cust-address" placeholder="Jalan, Nomor Rumah, Patokan..." class="w-full bg-transparent text-sm font-medium text-gray-800 outline-none h-20 resize-none placeholder:font-normal"></textarea>
                         </div>
+
                         <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Catatan</label>
                             <textarea id="cust-note" placeholder="Contoh: Pedas, pita biru..." class="w-full bg-transparent text-sm font-medium text-gray-800 outline-none h-16 resize-none placeholder:font-normal"></textarea>
                         </div>
                     </div>
-                    <!-- Payment Info -->
+
                     <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-3">
                         <div class="flex items-center gap-2 mb-1">
                             <i data-lucide="credit-card" class="w-4 h-4 text-blue-600"></i>
@@ -242,6 +255,7 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="pt-2">
                         <div class="flex justify-between items-center mb-3">
                             <span class="text-gray-500 text-sm font-medium">Total Tagihan</span>
@@ -315,7 +329,7 @@
             fetchMenu();
             renderTabs();
             checkStoreStatus();
-            generatePattern(); 
+            generatePattern(); // PATTERN
             
             const savedName = localStorage.getItem('sedayu_customer_name');
             if (savedName) {
@@ -327,9 +341,8 @@
         function toggleChatWidget() {
             const chatWidget = document.getElementById('chat-widget');
             chatWidget.classList.toggle('hidden');
-            chatWidget.classList.toggle('flex'); // Enable flex layout when showing
+            chatWidget.classList.toggle('flex');
             
-            // Focus input if opening
             if (!chatWidget.classList.contains('hidden')) {
                 setTimeout(() => document.getElementById('chat-input').focus(), 100);
             }
@@ -343,11 +356,10 @@
             const waNumber = "6281584448308";
             window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`, '_blank');
             
-            input.value = ''; // Reset input
-            toggleChatWidget(); // Close widget (optional)
+            input.value = ''; 
+            // WIDGET TETAP TERBUKA SETELAH KIRIM (REQUEST USER)
         }
 
-        // Allow 'Enter' key to send
         document.getElementById('chat-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') sendChat();
         });
@@ -355,6 +367,7 @@
         // --- PATTERN GENERATOR ---
         function generatePattern() {
             const container = document.getElementById('dynamic-pattern');
+            if (!container) return;
             const icons = ['chef-hat', 'flame', 'leaf', 'soup', 'wheat']; 
             const density = 150; 
             
@@ -564,7 +577,7 @@
             lucide.createIcons();
         }
 
-        // --- CLIPBOARD FUNCTION ---
+        // --- ROBUST CLIPBOARD FUNCTION ---
         function copyText(text, label) {
             const el = document.createElement('textarea');
             el.value = text;
@@ -811,5 +824,3 @@
     </script>
 </body>
 </html>
-
-
