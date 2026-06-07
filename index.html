@@ -859,7 +859,7 @@
             const originalText = btn.innerHTML;
             btn.innerHTML = "Memproses..."; btn.disabled = true;
 
-            const itemsStr = cart.map(i => `${i.name} (x${i.qty})`).join(', ');
+            const itemsStr = cart.map(i => `${i.name} (x${i.qty}) @${i.price}`).join(', ');
             const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
             let delInfo = deliveryType === 'delivery' ? "Antar Kurir" : "Ambil di Dapur";
             let finalNote = note;
