@@ -327,6 +327,10 @@
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Nama Pemesan</label>
                             <input type="text" id="cust-name" placeholder="Nama Anda..." class="w-full bg-transparent text-sm font-bold text-gray-800 outline-none placeholder:font-normal">
                         </div>
+                        <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">No. WhatsApp</label>
+                            <input type="tel" id="cust-phone" placeholder="Contoh: 081234567890..." class="w-full bg-transparent text-sm font-bold text-gray-800 outline-none placeholder:font-normal">
+                        </div>
                         <div id="address-container" class="bg-gray-50 p-3 rounded-xl border border-gray-100 hidden">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Alamat Pengiriman</label>
                             <textarea id="cust-address" placeholder="Jalan, Nomor Rumah, Patokan..." class="w-full bg-transparent text-sm font-medium text-gray-800 outline-none h-20 resize-none placeholder:font-normal"></textarea>
@@ -849,9 +853,11 @@
 
         async function processCheckout() {
             const name = document.getElementById('cust-name').value;
+            const phone = document.getElementById('cust-phone').value;
             const note = document.getElementById('cust-note').value;
             const address = document.getElementById('cust-address').value;
             if (!name) { alert("Isi nama dulu ya!"); return; }
+            if (!phone) { alert("Isi nomor WhatsApp dulu ya!"); return; }
             if (deliveryType === 'delivery' && !address) { alert("Alamat wajib diisi!"); return; }
 
             localStorage.setItem('sedayu_customer_name', name);
@@ -870,7 +876,7 @@
             
             // Siapkan array promise untuk mengirim data
             const requests = [];
-            let waMsg = `🧾 *STRUK SEDAYU HUB*\nNama: ${name}\nMetode: ${delInfo}\n`;
+            let waMsg = `🧾 *STRUK SEDAYU HUB*\nNama: ${name}\nNo. WA: ${phone}\nMetode: ${delInfo}\n`;
             if (deliveryType === 'delivery') waMsg += `🏠 Alamat: ${address}\n`;
             if (note) waMsg += `📝 Catatan: ${note}\n\n`;
 
@@ -882,7 +888,7 @@
                 requests.push(fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ 
-                        nama: name, nomor_hp: '-', 
+                        nama: name, nomor_hp: phone, 
                         items: `[SEDAYU] ${strSedayu}`, // Beri Tag Merek
                         total: totalSedayu, catatan: finalNote 
                     })
@@ -899,7 +905,7 @@
                 requests.push(fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ 
-                        nama: name, nomor_hp: '-', 
+                        nama: name, nomor_hp: phone, 
                         items: `[BLOOMS] ${strBlooms}`, // Beri Tag Merek
                         total: totalBlooms, catatan: finalNote 
                     })
