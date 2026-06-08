@@ -367,6 +367,13 @@
                                 </div>
                                 <i data-lucide="copy" class="w-4 h-4 text-gray-400 group-hover:text-green-600"></i>
                             </div>
+                            <div onclick="openLightbox('https://i.ibb.co.com/k2xSV13Y/qris-sticker-pdf.png')" class="flex items-center justify-between bg-white p-2 rounded-lg border border-blue-100 cursor-pointer hover:bg-blue-50 transition active:scale-95 group">
+                                <div class="flex items-center gap-3">
+                                    <div class="h-6 w-12 bg-pink-600 rounded flex items-center justify-center text-[10px] font-bold text-white">QRIS</div>
+                                    <div><p class="text-xs font-bold text-gray-800">Scan QR Code</p><p class="text-[10px] text-gray-500">Semua E-Wallet & M-Banking</p></div>
+                                </div>
+                                <i data-lucide="qr-code" class="w-4 h-4 text-gray-400 group-hover:text-pink-600"></i>
+                            </div>
                         </div>
                     </div>
                     <div class="pt-2">
@@ -916,7 +923,7 @@
 
             // Total Keseluruhan untuk WA
             const grandTotal = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-            waMsg += `💰 *TOTAL KESELURUHAN: Rp ${grandTotal.toLocaleString('id-ID')}*\n\n💳 Info Bayar:\n• BNI: 699441202\n• BCA: 6225038906\n• GOPAY: 081584448308\n(a.n Finda Fatmawati)\n\nMohon diproses, terima kasih!`;
+            waMsg += `💰 *TOTAL KESELURUHAN: Rp ${grandTotal.toLocaleString('id-ID')}*\n\n💳 Info Bayar:\n• BNI: 699441202\n• BCA: 6225038906\n• GOPAY: 081584448308\n• QRIS: Tersedia di Website\n(a.n Finda Fatmawati)\n\nMohon diproses, terima kasih!`;
 
             try {
                 // Tunggu semua proses pengiriman selesai
