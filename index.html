@@ -109,7 +109,7 @@
         <!-- PRODUCT GRID (For Retail Items) -->
         <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 hidden"></div>
         
-        <!-- EVENT PLANNER SECTION (New Feature) -->
+        <!-- EVENT PLANNER SECTION -->
         <div id="event-planner" class="hidden animate-fade-in">
             <div class="bg-white rounded-3xl shadow-lg border border-orange-100 overflow-hidden">
                 <div class="bg-gradient-to-r from-slate-800 to-slate-900 p-6 text-white text-center">
@@ -266,7 +266,7 @@
         </button>
     </div>
 
-    <!-- CHAT WIDGET POPUP -->
+    <!-- CHAT WIDGET POPUP (TERHUBUNG KE FIREBASE) -->
     <div id="chat-widget" class="fixed bottom-24 right-4 z-40 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 hidden flex-col overflow-hidden chat-slide-up origin-bottom-right">
         <div class="bg-[#075E54] p-4 flex justify-between items-center text-white">
             <div class="flex items-center gap-3">
@@ -280,19 +280,24 @@
             </div>
             <button onclick="toggleChatWidget()" class="text-white hover:bg-white/10 p-1 rounded"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
-        <div class="p-4 bg-[#E5DDD5] bg-opacity-30 h-64 flex flex-col gap-3 overflow-y-auto">
+        
+        <div id="chat-messages-container" class="p-4 bg-[#E5DDD5] bg-opacity-30 h-64 flex flex-col gap-3 overflow-y-auto">
             <div class="self-start bg-white p-3 rounded-tr-xl rounded-bl-xl rounded-br-xl shadow-sm max-w-[85%]">
                 <p class="text-xs text-gray-600 mb-1 font-bold">Admin</p>
                 <p class="text-sm text-gray-800">Halo kak! 👋 Mau tanya paket Wedding atau pesan makanan?</p>
                 <p class="text-[10px] text-gray-400 text-right mt-1">Now</p>
             </div>
         </div>
+        
         <div class="p-3 bg-white border-t border-gray-100">
-            <div class="flex gap-2">
-                <input type="text" id="chat-input" placeholder="Ketik pesan..." class="w-full bg-gray-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500">
-                <button onclick="sendChat()" class="bg-[#25D366] text-white p-2 rounded-full hover:bg-green-600 transition shadow-md flex-shrink-0">
-                    <i data-lucide="send" class="w-4 h-4"></i>
-                </button>
+            <div class="flex flex-col gap-2">
+                <input type="text" id="chat-name-input" placeholder="Masukkan Nama Kamu..." class="w-full bg-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 font-bold">
+                <div class="flex gap-2">
+                    <input type="text" id="chat-input" placeholder="Ketik pesan..." class="w-full bg-gray-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500">
+                    <button onclick="sendChatFirebase()" class="bg-[#25D366] text-white p-2 rounded-full hover:bg-green-600 transition shadow-md flex-shrink-0">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -382,7 +387,6 @@
                             <span class="text-xl font-black text-gray-900" id="cart-total-display">Rp 0</span>
                         </div>
                         
-                        <!-- Peringatan Upload Bukti Transfer -->
                         <div class="bg-blue-50 p-3 rounded-xl border border-blue-200 mb-4 flex items-start gap-3 animate-fade-in">
                             <div class="bg-blue-100 p-2 rounded-full shrink-0">
                                 <i data-lucide="camera" class="w-4 h-4 text-blue-600"></i>
@@ -466,6 +470,7 @@
             const savedName = localStorage.getItem('sedayu_customer_name');
             if (savedName) {
                 document.getElementById('cust-name').value = savedName;
+                document.getElementById('chat-name-input').value = savedName; // Auto-fill untuk chat juga
             }
         });
 
@@ -479,11 +484,9 @@
             const width = window.innerWidth;
             const height = Math.max(window.innerHeight, document.body.scrollHeight);
             
+            const fragment = document.createDocumentFragment();
             const cols = Math.ceil(width / density);
             const rows = Math.ceil(height / density);
-            
-            /* Optimasi Performa: Menggunakan DocumentFragment agar render lebih cepat (Smooth) */
-            const fragment = document.createDocumentFragment();
             
             for(let r = 0; r < rows; r++) {
                 for(let c = 0; c < cols; c++) {
@@ -557,7 +560,6 @@
             renderProducts();
         }
 
-        // --- RENDER TABS (Modified for Event) ---
         function renderTabs() {
             const tabs = [
                 { id: 'all', label: 'Semua', icon: '' },
@@ -565,7 +567,7 @@
                 { id: 'minuman', label: 'Minuman', icon: 'cup-soda' },
                 { id: 'balon', label: 'Balon', icon: 'party-popper' },
                 { id: 'bucket', label: 'Bucket', icon: 'gift' },
-                { id: 'event', label: 'Wedding & Event', icon: 'calendar-heart' } // NEW TAB
+                { id: 'event', label: 'Wedding & Event', icon: 'calendar-heart' }
             ];
             const container = document.getElementById('tabs-container');
             container.innerHTML = tabs.map(tab => `
@@ -597,23 +599,20 @@
             renderProducts();
         }
 
-        // --- RENDER PRODUCTS (Modified to show Event Section) ---
         function renderProducts() {
             const container = document.getElementById('product-grid');
             const eventPlanner = document.getElementById('event-planner');
             const emptyState = document.getElementById('empty-state');
             
-            // IF TAB IS EVENT
             if (activeTab === 'event') {
                 container.classList.add('hidden');
                 emptyState.classList.add('hidden');
                 eventPlanner.classList.remove('hidden');
-                return; // Stop here for event tab
+                return;
             } else {
                 eventPlanner.classList.add('hidden');
             }
 
-            // Normal Product Logic
             let filtered = activeTab === 'all' ? products : products.filter(p => p.category === activeTab);
             if (searchKeyword) {
                 filtered = filtered.filter(p => p.name.toLowerCase().includes(searchKeyword));
@@ -711,7 +710,6 @@
             const paxInput = document.getElementById('event-pax').value;
             const pax = paxInput ? parseInt(paxInput) : 0;
             
-            // Get selected package price
             const packageRadios = document.getElementsByName('event-package');
             let packagePrice = 0;
             let packageName = '';
@@ -719,15 +717,12 @@
             for(const radio of packageRadios) {
                 if(radio.checked) {
                     packagePrice = parseInt(radio.value);
-                    // Find package name from sibling label
-                    const label = radio.parentElement.querySelector('h4').textContent;
                     if(packagePrice === 35000) packageName = 'Bronze';
                     if(packagePrice === 55000) packageName = 'Silver';
                     if(packagePrice === 85000) packageName = 'Gold';
                 }
             }
 
-            // Get Addons
             let addonTotal = 0;
             if(document.getElementById('addon-decor').checked) addonTotal += 2500000;
             if(document.getElementById('addon-mc').checked) addonTotal += 1500000;
@@ -753,7 +748,6 @@
             window.open(`https://wa.me/6285831148113?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // --- EXISTING FUNCTIONS (Copy, Toast, Cart, Checkout, Chat) ---
         function copyText(text, label) {
             const el = document.createElement('textarea');
             el.value = text;
@@ -863,7 +857,6 @@
 
         function setDelivery(type) {
             deliveryType = type;
-            // Simplified class toggling logic
             const activeClass = "bg-orange-50 border-orange-500 text-orange-700 ring-1 ring-orange-500";
             const inactiveClass = "bg-white border-gray-200 text-gray-500 hover:bg-gray-50";
             document.getElementById('btn-pickup').className = `py-3 px-2 rounded-xl border text-sm font-bold flex flex-col items-center justify-center gap-1 transition-all ${type === 'pickup' ? activeClass : inactiveClass}`;
@@ -884,22 +877,21 @@
             const note = document.getElementById('cust-note').value;
             const address = document.getElementById('cust-address').value;
             
-            // Perbaikan: Menggunakan showToast agar lebih elegan dari fungsi alert() standar
             if (!name) { showToast("Nama pemesan wajib diisi!", 'error'); return; }
             if (!phone) { showToast("Nomor WhatsApp wajib diisi!", 'error'); return; }
             if (deliveryType === 'delivery' && !address) { showToast("Alamat pengiriman wajib diisi!", 'error'); return; }
 
             localStorage.setItem('sedayu_customer_name', name);
+            if (document.getElementById('chat-name-input')) {
+                document.getElementById('chat-name-input').value = name;
+            }
+
             const btn = document.getElementById('btn-checkout');
             const originalText = btn.innerHTML;
-            
-            // Animasi Loading pada tombol
             btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin-custom"></i> Memproses...'; 
             btn.disabled = true;
             lucide.createIcons();
 
-            // --- PEMISAHAN BERDASARKAN KATEGORI MEREK ---
-            // Pisahkan item keranjang menjadi dua kelompok
             const itemsSedayu = cart.filter(i => i.category === 'kuliner' || i.category === 'minuman');
             const itemsBlooms = cart.filter(i => i.category === 'balon' || i.category === 'bucket');
 
@@ -907,54 +899,35 @@
             let finalNote = note;
             if (deliveryType === 'delivery') finalNote = `[Alamat: ${address}] ${note}`;
             
-            // Siapkan array promise untuk mengirim data secara paralel (Lebih cepat/smooth)
             const requests = [];
             let waMsg = `🧾 *STRUK SEDAYU HUB*\nNama: ${name}\nNo. WA: ${phone}\nMetode: ${delInfo}\n`;
             if (deliveryType === 'delivery') waMsg += `🏠 Alamat: ${address}\n`;
             if (note) waMsg += `📝 Catatan: ${note}\n\n`;
 
-            // 1. Proses Pesanan Dapur Sedayu (Jika ada)
             if (itemsSedayu.length > 0) {
                 const strSedayu = itemsSedayu.map(i => `${i.name} (x${i.qty}) @${i.price}`).join(', ');
                 const totalSedayu = itemsSedayu.reduce((acc, i) => acc + (i.price * i.qty), 0);
-                
                 requests.push(fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        nama: name, nomor_hp: phone, 
-                        items: `[SEDAYU] ${strSedayu}`, // Beri Tag Merek
-                        total: totalSedayu, catatan: finalNote 
-                    })
+                    body: JSON.stringify({ nama: name, nomor_hp: phone, items: `[SEDAYU] ${strSedayu}`, total: totalSedayu, catatan: finalNote })
                 }));
-                
                 waMsg += `🟧 *Pesanan Dapur Sedayu:*\n${strSedayu.replace(/, /g, '\n')}\nSubtotal: Rp ${totalSedayu.toLocaleString('id-ID')}\n\n`;
             }
 
-            // 2. Proses Pesanan Bloomsbaloon (Jika ada)
             if (itemsBlooms.length > 0) {
                 const strBlooms = itemsBlooms.map(i => `${i.name} (x${i.qty}) @${i.price}`).join(', ');
                 const totalBlooms = itemsBlooms.reduce((acc, i) => acc + (i.price * i.qty), 0);
-                
                 requests.push(fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        nama: name, nomor_hp: phone, 
-                        items: `[BLOOMS] ${strBlooms}`, // Beri Tag Merek
-                        total: totalBlooms, catatan: finalNote 
-                    })
+                    body: JSON.stringify({ nama: name, nomor_hp: phone, items: `[BLOOMS] ${strBlooms}`, total: totalBlooms, catatan: finalNote })
                 }));
-                
                 waMsg += `🟪 *Pesanan Bloomsbaloon:*\n${strBlooms.replace(/, /g, '\n')}\nSubtotal: Rp ${totalBlooms.toLocaleString('id-ID')}\n\n`;
             }
 
-            // Total Keseluruhan untuk WA
             const grandTotal = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-            
-            // Penegasan instruksi upload bukti pembayaran di WhatsApp
             waMsg += `💰 *TOTAL KESELURUHAN: Rp ${grandTotal.toLocaleString('id-ID')}*\n\n💳 Info Bayar:\n• BNI: 699441202\n• BCA: 6225038906\n• GOPAY: 081584448308\n• QRIS: Tersedia di Website\n(a.n Finda Fatmawati)\n\n*PENTING:* 📷 Mohon lampirkan foto/screenshot *BUKTI PEMBAYARAN* Anda bersama dengan pesan ini agar pesanan dapat segera kami proses.\n\nTerima kasih!`;
 
             try {
-                // Tunggu semua proses pengiriman selesai secara serentak
                 await Promise.all(requests);
             } catch (e) { 
                 console.error("Gagal mengirim pesanan", e); 
@@ -965,26 +938,130 @@
             btn.innerHTML = originalText; btn.disabled = false;
         }
 
-        // Chat Widget
+        // --- FIREBASE CHAT LOGIC ---
         function toggleChatWidget() {
             const chatWidget = document.getElementById('chat-widget');
             chatWidget.classList.toggle('hidden'); chatWidget.classList.toggle('flex');
-            if (!chatWidget.classList.contains('hidden')) setTimeout(() => document.getElementById('chat-input').focus(), 100);
+            if (!chatWidget.classList.contains('hidden')) {
+                const nameInput = document.getElementById('chat-name-input');
+                if(!nameInput.value) nameInput.focus();
+                else document.getElementById('chat-input').focus();
+            }
         }
-        function sendChat() {
-            const msg = document.getElementById('chat-input').value.trim();
-            if (!msg) return;
-            window.open(`https://wa.me/6285831148113?text=${encodeURIComponent(msg)}`, '_blank');
+        
+        function sendChatFirebase() {
+            const name = document.getElementById('chat-name-input').value.trim();
+            const text = document.getElementById('chat-input').value.trim();
+            
+            if (!name) { 
+                showToast("Isi nama kamu dulu ya!", "error"); 
+                document.getElementById('chat-name-input').focus(); 
+                return; 
+            }
+            if (!text) return;
+            
+            localStorage.setItem('sedayu_customer_name', name); // Simpan nama
+            
+            if (window.sendCustomerMessage) {
+                window.sendCustomerMessage(name, text);
+            } else {
+                showToast("Sedang menghubungkan ke server chat...", "error");
+            }
             document.getElementById('chat-input').value = '';
         }
-        document.getElementById('chat-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') sendChat(); });
+        
+        document.getElementById('chat-input').addEventListener('keypress', function (e) { 
+            if (e.key === 'Enter') sendChatFirebase(); 
+        });
 
         // AI & Lightbox Functions
         function toggleAI() { document.getElementById('ai-modal').classList.toggle('hidden'); }
-        async function callGemini() { /* ... AI Logic ... */ } // Placeholder as AI was requested to be removed previously but kept in UI structure
-        function copyAiToNote() { /* ... */ }
+        async function callGemini() { } 
+        function copyAiToNote() { }
         function openLightbox(url) { document.getElementById('lightbox-img').src = url; document.getElementById('lightbox-modal').classList.remove('hidden'); }
         function closeLightbox() { document.getElementById('lightbox-modal').classList.add('hidden'); }
+    </script>
+
+    <!-- FIREBASE CHAT CLIENT SCRIPT -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"
+        import { getFirestore, doc, setDoc, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"
+
+        // Setup Dasar Firebase
+        let firebaseConfig = { projectId: "demo-project" }
+        try { if (typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config) } catch(e) {}
+        
+        const app = initializeApp(firebaseConfig)
+        const auth = getAuth(app)
+        const db = getFirestore(app)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'sedayu-hub'
+
+        // Buat ID unik untuk setiap pelanggan (Perangkat)
+        let deviceId = localStorage.getItem('sedayu_device_id')
+        if (!deviceId) {
+            deviceId = crypto.randomUUID()
+            localStorage.setItem('sedayu_device_id', deviceId)
+        }
+
+        let isAuthReady = false;
+
+        // Inisialisasi Auth Terlebih Dahulu (Wajib sebelum ke Firestore)
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token)
+                } else {
+                    await signInAnonymously(auth)
+                }
+                isAuthReady = true;
+                window.initClientChat();
+            } catch (error) {
+                console.error("Gagal melakukan autentikasi chat:", error)
+            }
+        }
+
+        // Listener Pesan
+        window.initClientChat = () => {
+            if (!isAuthReady) return;
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'chats', deviceId)
+            
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data()
+                    const msgContainer = document.getElementById('chat-messages-container')
+                    if (msgContainer && data.messages) {
+                        msgContainer.innerHTML = data.messages.map(m => `
+                            <div class="self-${m.sender === 'customer' ? 'end bg-[#dcf8c6]' : 'start bg-white'} p-2 rounded-xl shadow-sm text-sm border max-w-[85%] flex flex-col">
+                                <span class="text-[10px] text-gray-500 mb-0.5 font-bold">${m.sender === 'customer' ? 'Kamu' : 'Admin'}</span>
+                                <span class="text-gray-800">${m.text}</span>
+                                <span class="text-[9px] text-gray-400 mt-1 ${m.sender === 'customer' ? 'text-right' : 'text-left'}">${new Date(m.time).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}</span>
+                            </div>
+                        `).join('')
+                        msgContainer.scrollTop = msgContainer.scrollHeight
+                    }
+                }
+            }, (error) => console.log("Gagal memuat pesan:", error))
+        }
+
+        // Fungsi Mengirim Pesan Pelanggan
+        window.sendCustomerMessage = async (name, text) => {
+            if (!isAuthReady) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'chats', deviceId)
+                await setDoc(docRef, {
+                    name: name,
+                    lastMessage: text,
+                    timestamp: Date.now(),
+                    messages: arrayUnion({ sender: 'customer', text: text, time: Date.now() })
+                }, { merge: true })
+            } catch (error) {
+                console.error("Gagal mengirim pesan:", error);
+            }
+        }
+        
+        // Jalankan Autentikasi
+        initAuth();
     </script>
 </body>
 </html>
