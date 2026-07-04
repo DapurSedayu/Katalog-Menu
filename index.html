@@ -266,7 +266,7 @@
         </button>
     </div>
 
-    <!-- CHAT WIDGET POPUP (TERHUBUNG KE FIREBASE) -->
+    <!-- CHAT WIDGET POPUP -->
     <div id="chat-widget" class="fixed bottom-24 right-4 z-40 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 hidden flex-col overflow-hidden chat-slide-up origin-bottom-right">
         <div class="bg-[#075E54] p-4 flex justify-between items-center text-white">
             <div class="flex items-center gap-3">
@@ -282,7 +282,7 @@
         </div>
         
         <div id="chat-messages-container" class="p-4 bg-[#E5DDD5] bg-opacity-30 h-64 flex flex-col gap-3 overflow-y-auto">
-            <div class="self-start bg-white p-3 rounded-tr-xl rounded-bl-xl rounded-br-xl shadow-sm max-w-[85%]">
+            <div class="self-start bg-white p-3 rounded-tr-xl rounded-bl-xl rounded-br-xl shadow-sm max-w-[85%] border border-gray-100">
                 <p class="text-xs text-gray-600 mb-1 font-bold">Admin</p>
                 <p class="text-sm text-gray-800">Halo kak! 👋 Mau tanya paket Wedding atau pesan makanan?</p>
                 <p class="text-[10px] text-gray-400 text-right mt-1">Now</p>
@@ -291,10 +291,10 @@
         
         <div class="p-3 bg-white border-t border-gray-100">
             <div class="flex flex-col gap-2">
-                <input type="text" id="chat-name-input" placeholder="Masukkan Nama Kamu..." class="w-full bg-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 font-bold">
+                <input type="text" id="chat-name-input" placeholder="Masukkan Nama Anda..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-500 font-bold text-gray-800">
                 <div class="flex gap-2">
-                    <input type="text" id="chat-input" placeholder="Ketik pesan..." class="w-full bg-gray-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500">
-                    <button onclick="sendChatFirebase()" class="bg-[#25D366] text-white p-2 rounded-full hover:bg-green-600 transition shadow-md flex-shrink-0">
+                    <input type="text" id="chat-input" placeholder="Ketik pesan..." class="w-full bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-green-500 text-gray-800">
+                    <button onclick="sendChatFirebase()" class="bg-[#25D366] text-white p-2.5 rounded-full hover:bg-green-600 transition shadow-md flex-shrink-0 flex items-center justify-center">
                         <i data-lucide="send" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -938,10 +938,12 @@
             btn.innerHTML = originalText; btn.disabled = false;
         }
 
-        // --- FIREBASE CHAT LOGIC ---
+        // --- CHAT LOGIC (FIREBASE) ---
         function toggleChatWidget() {
             const chatWidget = document.getElementById('chat-widget');
-            chatWidget.classList.toggle('hidden'); chatWidget.classList.toggle('flex');
+            chatWidget.classList.toggle('hidden'); 
+            chatWidget.classList.toggle('flex');
+            
             if (!chatWidget.classList.contains('hidden')) {
                 const nameInput = document.getElementById('chat-name-input');
                 if(!nameInput.value) nameInput.focus();
@@ -967,6 +969,7 @@
             } else {
                 showToast("Sedang menghubungkan ke server chat...", "error");
             }
+            
             document.getElementById('chat-input').value = '';
         }
         
@@ -985,34 +988,25 @@
     <!-- FIREBASE CHAT CLIENT SCRIPT -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"
         import { getFirestore, doc, setDoc, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"
 
-        // ==========================================
-        // GANTI BAGIAN INI SAAT UNGGAH KE GITHUB
-        // Masukkan Konfigurasi Firebase Asli Milikmu
-        // ==========================================
-        let firebaseConfig = {
-            apiKey: "ISI_API_KEY_KAMU",
-            authDomain: "ISI_AUTH_DOMAIN_KAMU",
-            projectId: "ISI_PROJECT_ID_KAMU",
-            storageBucket: "ISI_STORAGE_BUCKET_KAMU",
-            messagingSenderId: "ISI_SENDER_ID_KAMU",
-            appId: "ISI_APP_ID_KAMU"
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXybR3C-tTdDYe8Hp0mLS5LEsJl3_i4rg",
+            authDomain: "sedayu-hub.firebaseapp.com",
+            projectId: "sedayu-hub",
+            storageBucket: "sedayu-hub.firebasestorage.app",
+            messagingSenderId: "1056611525373",
+            appId: "1:1056611525373:web:ea75fdf540c5573468d494"
         };
-        // Logika ini berguna saat kamu uji coba di mode pratinjau
-        try { if (typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config) } catch(e) {}
         
         const app = initializeApp(firebaseConfig)
         const auth = getAuth(app)
         const db = getFirestore(app)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'sedayu-hub'
+        const appId = 'sedayu-hub'
 
-        // Pembuat ID Cadangan agar aman dari pemblokiran peladen
         function generateUUID() {
-            if (crypto && crypto.randomUUID) {
-                return crypto.randomUUID();
-            }
+            if (crypto && crypto.randomUUID) return crypto.randomUUID();
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
                 var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
                 return v.toString(16);
@@ -1029,11 +1023,7 @@
 
         const initAuth = async () => {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token)
-                } else {
-                    await signInAnonymously(auth)
-                }
+                await signInAnonymously(auth)
                 isAuthReady = true;
                 window.initClientChat();
             } catch (error) {
