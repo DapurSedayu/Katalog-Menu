@@ -960,7 +960,7 @@
             }
             if (!text) return;
             
-            localStorage.setItem('sedayu_customer_name', name); // Simpan nama
+            localStorage.setItem('sedayu_customer_name', name);
             
             if (window.sendCustomerMessage) {
                 window.sendCustomerMessage(name, text);
@@ -988,8 +988,19 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"
         import { getFirestore, doc, setDoc, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"
 
-        // Setup Dasar Firebase
-        let firebaseConfig = { projectId: "demo-project" }
+        // ==========================================
+        // GANTI BAGIAN INI SAAT UNGGAH KE GITHUB
+        // Masukkan Konfigurasi Firebase Asli Milikmu
+        // ==========================================
+        let firebaseConfig = {
+            apiKey: "ISI_API_KEY_KAMU",
+            authDomain: "ISI_AUTH_DOMAIN_KAMU",
+            projectId: "ISI_PROJECT_ID_KAMU",
+            storageBucket: "ISI_STORAGE_BUCKET_KAMU",
+            messagingSenderId: "ISI_SENDER_ID_KAMU",
+            appId: "ISI_APP_ID_KAMU"
+        };
+        // Logika ini berguna saat kamu uji coba di mode pratinjau
         try { if (typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config) } catch(e) {}
         
         const app = initializeApp(firebaseConfig)
@@ -997,16 +1008,25 @@
         const db = getFirestore(app)
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'sedayu-hub'
 
-        // Buat ID unik untuk setiap pelanggan (Perangkat)
+        // Pembuat ID Cadangan agar aman dari pemblokiran peladen
+        function generateUUID() {
+            if (crypto && crypto.randomUUID) {
+                return crypto.randomUUID();
+            }
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
         let deviceId = localStorage.getItem('sedayu_device_id')
         if (!deviceId) {
-            deviceId = crypto.randomUUID()
+            deviceId = generateUUID();
             localStorage.setItem('sedayu_device_id', deviceId)
         }
 
         let isAuthReady = false;
 
-        // Inisialisasi Auth Terlebih Dahulu (Wajib sebelum ke Firestore)
         const initAuth = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -1021,7 +1041,6 @@
             }
         }
 
-        // Listener Pesan
         window.initClientChat = () => {
             if (!isAuthReady) return;
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'chats', deviceId)
@@ -1044,7 +1063,6 @@
             }, (error) => console.log("Gagal memuat pesan:", error))
         }
 
-        // Fungsi Mengirim Pesan Pelanggan
         window.sendCustomerMessage = async (name, text) => {
             if (!isAuthReady) return;
             try {
@@ -1060,7 +1078,6 @@
             }
         }
         
-        // Jalankan Autentikasi
         initAuth();
     </script>
 </body>
