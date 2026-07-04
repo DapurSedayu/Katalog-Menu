@@ -730,7 +730,7 @@
 
             const msg = `Halo Admin Sedayu Hub! 👋\nSaya ingin konsultasi *Paket Wedding/Event*.\n\nDetail Estimasi:\n• Tamu: ${pax} Pax\n• Paket: ${summary.split('•')[1]}\n• Add-on: ${addonStr}\n• Estimasi Budget: ${total}\n\nMohon info ketersediaan tanggal. Terima kasih!`;
             
-            window.open(`https://wa.me/6281584448308?text=${encodeURIComponent(msg)}`, '_blank');
+            window.open(`https://wa.me/6285831148113?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         // --- EXISTING FUNCTIONS (Copy, Toast, Cart, Checkout, Chat) ---
@@ -863,9 +863,9 @@
             const phone = document.getElementById('cust-phone').value;
             const note = document.getElementById('cust-note').value;
             const address = document.getElementById('cust-address').value;
-            if (!name) { alert("Isi nama dulu ya!"); return; }
-            if (!phone) { alert("Isi nomor WhatsApp dulu ya!"); return; }
-            if (deliveryType === 'delivery' && !address) { alert("Alamat wajib diisi!"); return; }
+            if (!name) { showToast("Isi nama dulu ya!", 'error'); return; }
+            if (!phone) { showToast("Isi nomor WhatsApp dulu ya!", 'error'); return; }
+            if (deliveryType === 'delivery' && !address) { showToast("Alamat wajib diisi!", 'error'); return; }
 
             localStorage.setItem('sedayu_customer_name', name);
             const btn = document.getElementById('btn-checkout');
@@ -923,7 +923,7 @@
 
             // Total Keseluruhan untuk WA
             const grandTotal = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-            waMsg += `💰 *TOTAL KESELURUHAN: Rp ${grandTotal.toLocaleString('id-ID')}*\n\n💳 Info Bayar:\n• BNI: 699441202\n• BCA: 6225038906\n• GOPAY: 081584448308\n• QRIS: Tersedia di Website\n(a.n Finda Fatmawati)\n\nMohon diproses, terima kasih!`;
+            waMsg += `💰 *TOTAL KESELURUHAN: Rp ${grandTotal.toLocaleString('id-ID')}*\n\n💳 Info Bayar:\n• BNI: 699441202\n• BCA: 6225038906\n• GOPAY: 081584448308\n• QRIS: Tersedia di Website\n(a.n Finda Fatmawati)\n\n*PENTING:* Mohon lampirkan foto/screenshot *BUKTI PEMBAYARAN* Anda bersama dengan pesan ini agar pesanan dapat segera diproses.\n\nTerima kasih!`;
 
             try {
                 // Tunggu semua proses pengiriman selesai
@@ -932,7 +932,7 @@
                 console.error("Gagal mengirim pesanan", e); 
             }
 
-            window.open(`https://wa.me/6281584448308?text=${encodeURIComponent(waMsg)}`, '_blank');
+            window.open(`https://wa.me/6285831148113?text=${encodeURIComponent(waMsg)}`, '_blank');
             cart = []; updateCartUI(); toggleCart();
             btn.innerHTML = originalText; btn.disabled = false;
         }
@@ -946,7 +946,7 @@
         function sendChat() {
             const msg = document.getElementById('chat-input').value.trim();
             if (!msg) return;
-            window.open(`https://wa.me/6281584448308?text=${encodeURIComponent(msg)}`, '_blank');
+            window.open(`https://wa.me/6285831148113?text=${encodeURIComponent(msg)}`, '_blank');
             document.getElementById('chat-input').value = '';
         }
         document.getElementById('chat-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') sendChat(); });
