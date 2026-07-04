@@ -381,8 +381,20 @@
                             <span class="text-gray-500 text-sm font-medium">Total Tagihan</span>
                             <span class="text-xl font-black text-gray-900" id="cart-total-display">Rp 0</span>
                         </div>
+                        
+                        <!-- Peringatan Upload Bukti Transfer -->
+                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-200 mb-4 flex items-start gap-3 animate-fade-in">
+                            <div class="bg-blue-100 p-2 rounded-full shrink-0">
+                                <i data-lucide="camera" class="w-4 h-4 text-blue-600"></i>
+                            </div>
+                            <p class="text-[11px] sm:text-xs text-blue-800 font-medium leading-relaxed">
+                                Setelah klik tombol di bawah, Anda akan diarahkan ke WhatsApp. <br/>
+                                <strong class="text-blue-900">Pastikan melampirkan Screenshot Bukti Transfer</strong> di obrolan agar pesanan langsung diproses!
+                            </p>
+                        </div>
+
                         <button onclick="processCheckout()" id="btn-checkout" class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-200 active:scale-[0.98] transition-all">
-                            <i data-lucide="file-text" class="w-5 h-5"></i> Kirim Struk & Order
+                            <i data-lucide="send" class="w-5 h-5"></i> Checkout via WhatsApp
                         </button>
                     </div>
                 </div>
@@ -470,7 +482,8 @@
             const cols = Math.ceil(width / density);
             const rows = Math.ceil(height / density);
             
-            let html = '';
+            /* Optimasi Performa: Menggunakan DocumentFragment agar render lebih cepat (Smooth) */
+            const fragment = document.createDocumentFragment();
             
             for(let r = 0; r < rows; r++) {
                 for(let c = 0; c < cols; c++) {
@@ -481,12 +494,19 @@
                     const top = (r * density) + Math.floor(Math.random() * 50);
                     const left = (c * density) + Math.floor(Math.random() * 50);
                     
-                    html += `<i data-lucide="${iconName}" 
-                        class="pattern-icon absolute" 
-                        style="top: ${top}px; left: ${left}px; width: ${size}px; height: ${size}px; transform: rotate(${rotation}deg);"></i>`;
+                    const i = document.createElement('i');
+                    i.setAttribute('data-lucide', iconName);
+                    i.className = 'pattern-icon absolute';
+                    i.style.top = `${top}px`;
+                    i.style.left = `${left}px`;
+                    i.style.width = `${size}px`;
+                    i.style.height = `${size}px`;
+                    i.style.transform = `rotate(${rotation}deg)`;
+                    fragment.appendChild(i);
                 }
             }
-            container.innerHTML = html;
+            container.innerHTML = '';
+            container.appendChild(fragment);
             lucide.createIcons();
         }
 
@@ -863,14 +883,20 @@
             const phone = document.getElementById('cust-phone').value;
             const note = document.getElementById('cust-note').value;
             const address = document.getElementById('cust-address').value;
-            if (!name) { showToast("Isi nama dulu ya!", 'error'); return; }
-            if (!phone) { showToast("Isi nomor WhatsApp dulu ya!", 'error'); return; }
-            if (deliveryType === 'delivery' && !address) { showToast("Alamat wajib diisi!", 'error'); return; }
+            
+            // Perbaikan: Menggunakan showToast agar lebih elegan dari fungsi alert() standar
+            if (!name) { showToast("Nama pemesan wajib diisi!", 'error'); return; }
+            if (!phone) { showToast("Nomor WhatsApp wajib diisi!", 'error'); return; }
+            if (deliveryType === 'delivery' && !address) { showToast("Alamat pengiriman wajib diisi!", 'error'); return; }
 
             localStorage.setItem('sedayu_customer_name', name);
             const btn = document.getElementById('btn-checkout');
             const originalText = btn.innerHTML;
-            btn.innerHTML = "Memproses..."; btn.disabled = true;
+            
+            // Animasi Loading pada tombol
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin-custom"></i> Memproses...'; 
+            btn.disabled = true;
+            lucide.createIcons();
 
             // --- PEMISAHAN BERDASARKAN KATEGORI MEREK ---
             // Pisahkan item keranjang menjadi dua kelompok
@@ -881,7 +907,7 @@
             let finalNote = note;
             if (deliveryType === 'delivery') finalNote = `[Alamat: ${address}] ${note}`;
             
-            // Siapkan array promise untuk mengirim data
+            // Siapkan array promise untuk mengirim data secara paralel (Lebih cepat/smooth)
             const requests = [];
             let waMsg = `🧾 *STRUK SEDAYU HUB*\nNama: ${name}\nNo. WA: ${phone}\nMetode: ${delInfo}\n`;
             if (deliveryType === 'delivery') waMsg += `🏠 Alamat: ${address}\n`;
@@ -923,10 +949,12 @@
 
             // Total Keseluruhan untuk WA
             const grandTotal = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-            waMsg += `💰 *TOTAL KESELURUHAN: Rp ${grandTotal.toLocaleString('id-ID')}*\n\n💳 Info Bayar:\n• BNI: 699441202\n• BCA: 6225038906\n• GOPAY: 081584448308\n• QRIS: Tersedia di Website\n(a.n Finda Fatmawati)\n\n*PENTING:* Mohon lampirkan foto/screenshot *BUKTI PEMBAYARAN* Anda bersama dengan pesan ini agar pesanan dapat segera diproses.\n\nTerima kasih!`;
+            
+            // Penegasan instruksi upload bukti pembayaran di WhatsApp
+            waMsg += `💰 *TOTAL KESELURUHAN: Rp ${grandTotal.toLocaleString('id-ID')}*\n\n💳 Info Bayar:\n• BNI: 699441202\n• BCA: 6225038906\n• GOPAY: 081584448308\n• QRIS: Tersedia di Website\n(a.n Finda Fatmawati)\n\n*PENTING:* 📷 Mohon lampirkan foto/screenshot *BUKTI PEMBAYARAN* Anda bersama dengan pesan ini agar pesanan dapat segera kami proses.\n\nTerima kasih!`;
 
             try {
-                // Tunggu semua proses pengiriman selesai
+                // Tunggu semua proses pengiriman selesai secara serentak
                 await Promise.all(requests);
             } catch (e) { 
                 console.error("Gagal mengirim pesanan", e); 
