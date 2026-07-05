@@ -537,12 +537,19 @@
         async function fetchMenu() {
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL);
+                if (!response.ok) throw new Error("Kendala jaringan");
                 const data = await response.json();
                 if (Array.isArray(data) && data.length > 0) products = data;
             } catch (error) {
                 console.error("Gagal load menu", error);
+                const loader = document.getElementById('loading-indicator');
+                if (loader) {
+                    loader.innerHTML = '<p class="text-red-500 font-bold text-sm text-center">Gagal memuat data menu.<br>Pastikan akses Google Script diatur ke Anyone.</p>';
+                }
+                return;
             } finally {
-                document.getElementById('loading-indicator').classList.add('hidden');
+                const loader = document.getElementById('loading-indicator');
+                if (loader && products.length > 0) loader.classList.add('hidden');
                 document.getElementById('product-grid').classList.remove('hidden');
                 renderProducts();
             }
