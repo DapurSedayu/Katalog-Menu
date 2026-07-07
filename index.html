@@ -34,6 +34,9 @@
         .toast-enter { animation: slideUp 0.3s ease-out forwards; }
         
         .chat-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        /* Khusus line-through harga coret */
+        .line-through-red { text-decoration: line-through; text-decoration-color: #ef4444; }
     </style>
 </head>
 <body class="bg-[#FDFBF7] text-gray-800 relative overflow-x-hidden min-h-screen pb-24 md:pb-0">
@@ -65,14 +68,14 @@
 
     <!-- HERO SECTION -->
     <div class="max-w-4xl mx-auto pt-6 px-4 pb-2 relative z-10">
-        <div class="bg-gradient-to-r from-orange-600 to-red-700 text-white py-10 px-6 text-center rounded-2xl shadow-xl shadow-orange-200 relative overflow-hidden">
+        <div class="bg-gradient-to-r from-orange-600 to-red-700 text-white py-10 px-6 text-center rounded-2xl shadow-xl shadow-orange-200 relative overflow-hidden" id="hero-banner">
             <div class="absolute opacity-10 top-0 left-0 w-full h-full pointer-events-none">
                  <i data-lucide="chef-hat" class="absolute top-2 left-2 w-20 h-20 text-white opacity-20 rotate-12"></i>
                  <i data-lucide="party-popper" class="absolute bottom-2 right-2 w-24 h-24 text-yellow-300 opacity-20 -rotate-12"></i>
             </div>
             <div class="relative z-10">
-                <h2 class="text-3xl md:text-4xl font-black mb-3 drop-shadow-md">Citarasa & Cerita</h2>
-                <p class="text-orange-50 text-sm md:text-base max-w-lg mx-auto mb-6 font-medium">Dari dapur penuh rempah hingga dekorasi penuh warna. <span class="block mt-1 font-bold text-yellow-200">Solusi Katering & Wedding Lengkap.</span></p>
+                <h2 class="text-3xl md:text-4xl font-black mb-3 drop-shadow-md" id="hero-title">Citarasa & Cerita</h2>
+                <p class="text-orange-50 text-sm md:text-base max-w-lg mx-auto mb-6 font-medium" id="hero-subtitle">Dari dapur penuh rempah hingga dekorasi penuh warna. <span class="block mt-1 font-bold text-yellow-200">Solusi Katering & Wedding Lengkap.</span></p>
                 
                 <div class="flex justify-center gap-3 mb-6 flex-wrap">
                     <a href="https://instagram.com/dapur.sedayu" target="_blank" class="flex items-center space-x-2 bg-white text-orange-600 px-4 py-2 rounded-full text-xs font-bold hover:bg-orange-50 transition shadow-sm border-b-2 border-orange-200">
@@ -106,7 +109,7 @@
             <p class="text-gray-500 text-sm font-medium">Sedang menyiapkan data...</p>
         </div>
 
-        <!-- PRODUCT GRID (For Retail Items) -->
+        <!-- PRODUCT GRID -->
         <div id="product-grid" class="grid hidden"></div>
         
         <!-- EVENT PLANNER SECTION -->
@@ -455,6 +458,16 @@
         let deliveryType = 'pickup';
         let aiResponseText = '';
         let searchKeyword = ''; 
+        let isJumatBerkah = false; // Flag untuk status promo
+
+        // DATA PROMO JUMAT BERKAH
+        const PROMO_DATA = {
+            "Nasi Ayam Serundeng": 15000,
+            "Nasi Ayam Gr. Rempah": 15000,
+            "Nasi Ayam Gr.Rempah": 15000, // Variasi penulisan
+            "Nasi Ayam Crispy Boneless": 12000,
+            "Nasi Ayam PopCorn": 12000
+        };
 
         // JAM OPERASIONAL
         const OPEN_HOUR = 8;
@@ -462,6 +475,31 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
+            
+            // Cek apakah hari ini Jumat (0: Minggu, 1: Senin, ..., 5: Jumat)
+            const today = new Date();
+            if (today.getDay() === 5) {
+                isJumatBerkah = true;
+                
+                // Ubah banner hero jika Jumat Berkah
+                const heroBanner = document.getElementById('hero-banner');
+                const heroTitle = document.getElementById('hero-title');
+                const heroSubtitle = document.getElementById('hero-subtitle');
+                
+                if (heroBanner) {
+                    heroBanner.classList.remove('from-orange-600', 'to-red-700');
+                    heroBanner.classList.add('from-red-600', 'to-red-800'); // Warna lebih gelap sesuai pamflet
+                }
+                if (heroTitle) {
+                    heroTitle.innerHTML = `Jumat <span class="text-yellow-300">Berkah!</span>`;
+                }
+                if (heroSubtitle) {
+                    heroSubtitle.innerHTML = `Spesial hari ini! Nasi Ayam cuma mulai dari <span class="font-bold text-yellow-300 text-lg">Rp 12.000</span>. Persediaan terbatas!`;
+                }
+                
+                setTimeout(() => showToast("Spesial Hari Jumat! Diskon Nasi Ayam aktif.", "success"), 1000);
+            }
+
             fetchMenu();
             renderTabs();
             checkStoreStatus();
@@ -606,6 +644,19 @@
             renderProducts();
         }
 
+        // Fungsi Helper untuk mengecek apakah item masuk promo
+        function getPromoPrice(productName) {
+            if (!isJumatBerkah) return null;
+            // Cari kecocokan sebagian (case insensitive) untuk meminimalisir typo admin
+            const nameLower = productName.toLowerCase();
+            for (let key in PROMO_DATA) {
+                if (nameLower.includes(key.toLowerCase())) {
+                    return PROMO_DATA[key];
+                }
+            }
+            return null;
+        }
+
         function renderProducts() {
             const container = document.getElementById('product-grid');
             const eventPlanner = document.getElementById('event-planner');
@@ -635,11 +686,14 @@
             }
 
             const storeOpen = isStoreOpen();
-            const isCompact = activeTab === 'all';
+            const isCompact = activeTab === 'all'; // Jika tab 'Semua', gunakan mode Kolase
 
+            // Atur Grid berdasarkan mode (Kolase vs Normal)
             if (isCompact) {
-                container.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4';
+                // Mode Kolase: 2 kolom HP, 4 kolom Desktop
+                container.className = 'grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4';
             } else {
+                // Mode Normal: 1 kolom HP, 3 kolom Desktop
                 container.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5';
             }
 
@@ -647,9 +701,12 @@
                 let imgContent = '';
                 const isUrl = product.image && product.image.includes('http');
                 
+                // Tinggi gambar berdasarkan mode
+                const imgHeight = isCompact ? 'h-32 sm:h-40' : 'h-80';
+                
                 if (isUrl) {
                     imgContent = `<img src="${product.image}" 
-                        class="w-full ${isCompact ? 'h-28 sm:h-36' : 'h-80'} object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer" 
+                        class="w-full ${imgHeight} object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer" 
                         onclick="openLightbox('${product.image}')"
                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">`;
                 }
@@ -662,55 +719,93 @@
                      else bgClass = 'bg-blue-100';
                 }
 
+                // Ikon Placeholder
                 const icon = product.category === 'kuliner' ? 'utensils' : product.category === 'balon' ? 'party-popper' : product.category === 'minuman' ? 'cup-soda' : 'gift';
                 const iconColor = product.category === 'kuliner' ? 'text-orange-500' : product.category === 'balon' ? 'text-pink-500' : product.category === 'minuman' ? 'text-teal-500' : 'text-blue-500';
+                const iconSize = isCompact ? 'w-5 h-5' : 'w-8 h-8';
+                const pIcon = isCompact ? 'p-2' : 'p-4';
 
                 const currentStock = (product.stock === undefined || product.stock === "") ? 999 : parseInt(product.stock);
                 const isSoldOut = currentStock <= 0;
                 const isDisabled = isSoldOut || !storeOpen;
 
+                // Cek Status Promo Jumat Berkah
+                const promoPrice = getPromoPrice(product.name);
+                const isPromoActive = promoPrice !== null;
+                const displayPrice = isPromoActive ? promoPrice : product.price;
+
                 let actionButton = '';
                 if (isDisabled) {
                     const btnText = !storeOpen ? "TUTUP" : "HABIS";
                     actionButton = `
-                    <button disabled class="bg-gray-200 text-gray-500 ${isCompact ? 'px-2 py-1 text-[9px] rounded-md' : 'px-4 py-2 text-xs rounded-xl'} font-bold cursor-not-allowed">
+                    <button disabled class="bg-gray-200 text-gray-500 ${isCompact ? 'px-2 py-1 text-[9px] rounded-md' : 'px-4 py-2 text-xs rounded-xl'} font-bold cursor-not-allowed w-full">
                         ${btnText}
                     </button>`;
                 } else {
                     actionButton = `
-                    <button onclick="addToCart('${product.id}')" class="bg-gray-900 text-white ${isCompact ? 'w-7 h-7 rounded-lg' : 'w-10 h-10 rounded-xl'} flex items-center justify-center hover:bg-orange-600 transition-colors duration-300 shadow-md active:scale-90">
+                    <button onclick="addToCart('${product.id}')" class="bg-gray-900 text-white ${isCompact ? 'w-8 h-8 rounded-lg shrink-0' : 'w-10 h-10 rounded-xl shrink-0'} flex items-center justify-center hover:bg-orange-600 transition-colors duration-300 shadow-md active:scale-90 relative">
                         <i data-lucide="plus" class="${isCompact ? 'w-4 h-4' : 'w-5 h-5'}"></i>
                     </button>`;
                 }
 
+                // Overlay Status (Tutup/Sold Out)
                 const overlayText = !storeOpen ? (isCompact ? "TUTUP" : "TOKO TUTUP") : "SOLD OUT";
                 const soldOutOverlay = isDisabled ? 
                     `<div class="absolute inset-0 bg-black/50 flex items-center justify-center z-30 pointer-events-none">
-                        <span class="text-white font-black ${isCompact ? 'text-[10px] border-2 px-2 py-1' : 'text-xl border-4 px-4 py-2'} rotate-[-12deg] tracking-widest uppercase">${overlayText}</span>
+                        <span class="text-white font-black ${isCompact ? 'text-xs border-2 px-2 py-1' : 'text-xl border-4 px-4 py-2'} rotate-[-12deg] tracking-widest uppercase">${overlayText}</span>
                     </div>` : '';
+
+                // Badge Promo
+                const promoBadge = isPromoActive ? 
+                    `<div class="absolute top-2 left-2 bg-red-600 text-white text-[9px] sm:text-[10px] font-black px-2 py-1 rounded shadow-md z-20 flex items-center gap-1 border border-red-400">
+                        <i data-lucide="flame" class="w-3 h-3"></i> JUMAT BERKAH
+                    </div>` : '';
+
+                // Logika Tampilan Harga
+                let priceHtml = '';
+                if (isPromoActive) {
+                    priceHtml = `
+                        <div class="flex flex-col">
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 line-through-red font-semibold">Rp ${Number(product.price).toLocaleString('id-ID')}</span>
+                            <span class="font-black ${isCompact ? 'text-sm sm:text-base' : 'text-lg'} text-red-600 leading-none">Rp ${Number(displayPrice).toLocaleString('id-ID')}</span>
+                        </div>
+                    `;
+                } else {
+                    priceHtml = `
+                        <div>
+                            ${!isCompact ? `<span class="text-[10px] text-gray-400 block font-bold uppercase mb-0.5">Harga</span>` : ''}
+                            <span class="font-black ${isCompact ? 'text-xs sm:text-sm' : 'text-lg'} text-gray-900">Rp ${Number(product.price).toLocaleString('id-ID')}</span>
+                        </div>
+                    `;
+                }
+
+                // Ukuran padding card
+                const pCard = isCompact ? 'p-2.5 sm:p-3' : 'p-5';
+                const textNameSize = isCompact ? 'text-[11px] sm:text-xs leading-tight line-clamp-2 min-h-[30px]' : 'text-lg leading-snug';
 
                 return `
                 <div class="bg-white ${isCompact ? 'rounded-xl' : 'rounded-2xl'} shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group animate-fade-in ${isDisabled ? 'grayscale opacity-80' : ''}">
-                    <div class="${isCompact ? 'h-28 sm:h-36' : 'h-80'} w-full relative overflow-hidden bg-gray-50">
+                    
+                    <div class="${imgHeight} w-full relative overflow-hidden bg-gray-50">
+                        ${promoBadge}
                         ${imgContent}
                         ${soldOutOverlay}
                         <div class="absolute inset-0 ${bgClass} flex items-center justify-center ${isUrl ? 'hidden' : 'flex'}">
-                            <div class="relative z-10 bg-white/80 backdrop-blur ${isCompact ? 'p-2' : 'p-4'} rounded-full shadow-sm">
-                                <i data-lucide="${icon}" class="${isCompact ? 'w-5 h-5' : 'w-8 h-8'} ${iconColor}"></i>
+                            <div class="relative z-10 bg-white/80 backdrop-blur ${pIcon} rounded-full shadow-sm">
+                                <i data-lucide="${icon}" class="${iconSize} ${iconColor}"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="${isCompact ? 'p-2.5 sm:p-3' : 'p-5'} flex flex-col flex-grow bg-white">
+
+                    <div class="${pCard} flex flex-col flex-grow bg-white">
                         <div class="flex-grow">
-                            <h3 class="font-bold text-gray-800 ${isCompact ? 'text-[11px] sm:text-xs leading-tight line-clamp-2' : 'text-lg leading-snug'} mb-1">${product.name}</h3>
+                            <h3 class="font-bold text-gray-800 ${textNameSize} mb-1">${product.name}</h3>
                             ${!isCompact ? `<p class="text-gray-500 text-xs leading-relaxed line-clamp-2">${product.desc}</p>` : ''}
-                            ${!isSoldOut && currentStock < 10 ? `<p class="text-[9px] text-red-500 font-bold mt-1">Sisa ${currentStock} item!</p>` : ''}
+                            ${!isSoldOut && currentStock < 10 ? `<p class="text-[9px] text-orange-500 font-bold mt-1">Sisa ${currentStock} porsi!</p>` : ''}
                         </div>
-                        <div class="${isCompact ? 'mt-2 pt-2' : 'mt-5 pt-4'} border-t border-dashed border-gray-200 flex items-center justify-between">
-                            <div>
-                                ${!isCompact ? `<span class="text-[10px] text-gray-400 block font-bold uppercase">Harga</span>` : ''}
-                                <span class="font-black ${isCompact ? 'text-[11px] sm:text-sm' : 'text-lg'} text-red-600">Rp ${Number(product.price).toLocaleString('id-ID')}</span>
-                            </div>
+                        
+                        <div class="${isCompact ? 'mt-2 pt-2' : 'mt-5 pt-4'} border-t border-dashed border-gray-200 flex items-end justify-between gap-2">
+                            ${priceHtml}
                             ${actionButton}
                         </div>
                     </div>
@@ -791,14 +886,37 @@
             }, 3000);
         }
 
+        // --- CART LOGIC MODIFIED FOR PROMO ---
         function addToCart(id) {
             if (!isStoreOpen()) { showToast("Maaf, toko sedang tutup.", 'error'); return; }
-            const product = products.find(p => p.id == id);
-            const currentStock = (product.stock === undefined || product.stock === "") ? 999 : parseInt(product.stock);
+            
+            // Dapatkan info produk dari data mentah
+            const productBase = products.find(p => p.id == id);
+            if(!productBase) return;
+
+            const currentStock = (productBase.stock === undefined || productBase.stock === "") ? 999 : parseInt(productBase.stock);
+            
+            // Cek apakah item ini masuk promo
+            const promoPrice = getPromoPrice(productBase.name);
+            const finalPrice = promoPrice !== null ? promoPrice : productBase.price;
+            const finalName = promoPrice !== null ? `${productBase.name} (Jumat Berkah)` : productBase.name;
+
             const existing = cart.find(item => item.id == id);
             const currentQty = existing ? existing.qty : 0;
             if (currentQty >= currentStock) { showToast("Stok habis!", 'error'); return; }
-            if (existing) existing.qty += 1; else cart.push({ ...product, qty: 1 });
+            
+            if (existing) {
+                existing.qty += 1; 
+            } else {
+                // Simpan item ke keranjang dengan harga dan nama final (promo jika ada)
+                cart.push({ 
+                    id: productBase.id, 
+                    name: finalName, 
+                    price: finalPrice, 
+                    qty: 1, 
+                    category: productBase.category 
+                });
+            }
             updateCartUI();
             showToast("Masuk keranjang!");
         }
@@ -844,12 +962,19 @@
             } else {
                 container.innerHTML = cart.map(item => `
                     <div class="flex gap-4 p-3 bg-white border border-gray-200 rounded-xl shadow-sm">
-                        <div class="flex-1"><h4 class="font-bold text-sm">${item.name}</h4><p class="text-red-600 font-bold text-sm">Rp ${(item.price * item.qty).toLocaleString('id-ID')}</p>
-                        <div class="flex items-center justify-between mt-2"><div class="flex gap-2">
-                        <button onclick="updateQty('${item.id}', -1)" class="p-1 border rounded"><i data-lucide="minus" class="w-3 h-3"></i></button>
-                        <span class="font-bold text-sm">${item.qty}</span>
-                        <button onclick="updateQty('${item.id}', 1)" class="p-1 border rounded"><i data-lucide="plus" class="w-3 h-3"></i></button></div>
-                        <button onclick="removeItem('${item.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div></div>`).join('');
+                        <div class="flex-1">
+                            <h4 class="font-bold text-sm leading-tight mb-1">${item.name}</h4>
+                            <p class="text-red-600 font-bold text-sm">Rp ${(item.price * item.qty).toLocaleString('id-ID')}</p>
+                            <div class="flex items-center justify-between mt-2">
+                                <div class="flex gap-2">
+                                    <button onclick="updateQty('${item.id}', -1)" class="p-1 border rounded"><i data-lucide="minus" class="w-3 h-3"></i></button>
+                                    <span class="font-bold text-sm">${item.qty}</span>
+                                    <button onclick="updateQty('${item.id}', 1)" class="p-1 border rounded"><i data-lucide="plus" class="w-3 h-3"></i></button>
+                                </div>
+                                <button onclick="removeItem('${item.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                    </div>`).join('');
                 footer.classList.remove('hidden');
                 const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
                 document.getElementById('cart-total-display').textContent = `Rp ${total.toLocaleString('id-ID')}`;
